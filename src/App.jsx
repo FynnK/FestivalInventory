@@ -602,33 +602,47 @@ function App() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
       <nav className="glass-card m-4 p-4">
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setPage('inventory')}
-            className={`nav-btn ${page === 'inventory' ? 'active' : ''}`}
-          >
-            <Warehouse size={20} />
-            Inventory
-          </button>
-          <button
-            onClick={() => setPage('stages')}
-            className={`nav-btn ${page === 'stages' ? 'active' : ''}`}
-          >
-            <Tent size={20} />
-            Stages
-          </button>
-          <button
-            onClick={() => setPage('reports')}
-            className={`nav-btn ${page === 'reports' ? 'active' : ''}`}
-          >
-            <Printer size={20} />
-            Reports
-          </button>
+        <div className="flex flex-wrap items-center justify-between">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setPage('inventory')}
+              className={`nav-btn ${page === 'inventory' ? 'active' : ''}`}
+            >
+              <Warehouse size={20} />
+              Inventory
+            </button>
+            <button
+              onClick={() => setPage('stages')}
+              className={`nav-btn ${page === 'stages' ? 'active' : ''}`}
+            >
+              <Tent size={20} />
+              Stages
+            </button>
+            <button
+              onClick={() => setPage('reports')}
+              className={`nav-btn ${page === 'reports' ? 'active' : ''}`}
+            >
+              <Printer size={20} />
+              Reports
+            </button>
+          </div>
+          {/* Buy Me a Coffee Button */}
+          <div className="ml-auto">
+            <a href="https://www.buymeacoffee.com/nonagonal" target="_blank" rel="noopener noreferrer">
+              <img
+                src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=nonagonal&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"
+                alt="Buy me a coffee"
+                style={{ height: '40px' }}
+              />
+            </a>
+          </div>
         </div>
       </nav>
 
       {/* Main Content */}
       <main className="p-4">
+        
+
         {page === 'inventory' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Transaction Panel */}

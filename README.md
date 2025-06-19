@@ -209,3 +209,10 @@ This project is provided as-is for educational and commercial use. Please ensure
 
 **Built with ❤️ for the festival and event management community**
 
+
+<p align="center">
+  <a href="https://www.buymeacoffee.com/nonagonal" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=nonagonal&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a coffee" style="height: 40px;" />
+  </a>
+</p>
+
