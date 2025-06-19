@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Barcode, Plus, Minus, Warehouse, Tent, CheckCircle, XCircle, 
-  Info, Trash2, AlertTriangle, Printer, ScanLine, ShoppingCart, 
-  ListChecks, ArrowLeftRight, Download, Edit, Wrench, Camera 
+import {
+  Barcode, Plus, Minus, Warehouse, Tent, CheckCircle, XCircle,
+  Info, Trash2, AlertTriangle, Printer, ScanLine, ShoppingCart,
+  ListChecks, ArrowLeftRight, Download, Edit, Wrench, Camera
 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import * as XLSX from 'xlsx';
@@ -11,41 +11,41 @@ import './App.css';
 // Mock Data
 const INITIAL_STAGES = ['Main Stage', 'Techno Tent', 'Acoustic Lounge', 'Cosmic Meadow', 'Warehouse'];
 const INITIAL_INVENTORY = [
-  { 
-    id: '84729103847', 
-    name: 'Screws (Box of 1000)', 
-    total: 10, 
-    remaining: 5, 
+  {
+    id: '84729103847',
+    name: 'Screws (Box of 1000)',
+    total: 10,
+    remaining: 5,
     usage: { 'Main Stage': 3, 'Techno Tent': 2 },
     unitQuantity: 1000,
     unitType: 'screws per box',
     description: 'Standard wood screws, 2.5cm length'
   },
-  { 
-    id: '98347502918', 
-    name: 'Gaffer Tape Roll (Black)', 
-    total: 50, 
-    remaining: 22, 
+  {
+    id: '98347502918',
+    name: 'Gaffer Tape Roll (Black)',
+    total: 50,
+    remaining: 22,
     usage: { 'Main Stage': 10, 'Techno Tent': 8, 'Acoustic Lounge': 10 },
     unitQuantity: 50,
     unitType: 'meters per roll',
     description: 'Professional grade gaffer tape, 50mm width'
   },
-  { 
-    id: '19283740192', 
-    name: 'XLR Cable (10ft)', 
-    total: 100, 
-    remaining: 100, 
+  {
+    id: '19283740192',
+    name: 'XLR Cable (10ft)',
+    total: 100,
+    remaining: 100,
     usage: {},
     unitQuantity: 1,
     unitType: 'cable',
     description: 'Professional XLR audio cable, 10 feet length'
   },
-  { 
-    id: '58473625198', 
-    name: 'Power Strip (6-outlet)', 
-    total: 30, 
-    remaining: 15, 
+  {
+    id: '58473625198',
+    name: 'Power Strip (6-outlet)',
+    total: 30,
+    remaining: 15,
     usage: { 'Warehouse': 15 },
     unitQuantity: 6,
     unitType: 'outlets per strip',
@@ -64,8 +64,8 @@ const Toast = ({ toast, onClose }) => {
 
   if (!toast.show) return null;
 
-  const bgColor = toast.type === 'success' ? 'bg-green-600' : 
-                  toast.type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+  const bgColor = toast.type === 'success' ? 'bg-green-600' :
+    toast.type === 'error' ? 'bg-red-600' : 'bg-blue-600';
 
   return (
     <div className={`fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in`}>
@@ -83,7 +83,7 @@ const Modal = ({ isOpen, onClose, title, children, className = '' }) => {
       <div className={`glass-card p-6 w-full max-w-md max-h-[90vh] overflow-y-auto ${className}`}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold">{title}</h3>
-          <button 
+          <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
           >
@@ -99,7 +99,7 @@ const Modal = ({ isOpen, onClose, title, children, className = '' }) => {
 // Button Component
 const Button = ({ variant = 'primary', size = 'md', children, className = '', disabled = false, ...props }) => {
   const baseClasses = 'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 rounded-lg';
-  
+
   const variants = {
     primary: 'bg-blue-600 hover:bg-blue-700 text-white',
     secondary: 'bg-pink-600 hover:bg-pink-700 text-white',
@@ -107,7 +107,7 @@ const Button = ({ variant = 'primary', size = 'md', children, className = '', di
     danger: 'bg-red-600 hover:bg-red-700 text-white',
     ghost: 'bg-gray-600 hover:bg-gray-700 text-white'
   };
-  
+
   const sizes = {
     sm: 'px-3 py-1.5 text-sm',
     md: 'px-4 py-2',
@@ -117,7 +117,7 @@ const Button = ({ variant = 'primary', size = 'md', children, className = '', di
   const disabledClasses = disabled ? 'opacity-50 cursor-not-allowed' : '';
 
   return (
-    <button 
+    <button
       className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${disabledClasses} ${className}`}
       disabled={disabled}
       {...props}
@@ -132,7 +132,7 @@ const Input = React.forwardRef(({ label, className = '', ...props }, ref) => {
   return (
     <div className="space-y-1">
       {label && <label className="block text-sm font-medium text-gray-300">{label}</label>}
-      <input 
+      <input
         ref={ref}
         className={`w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${className}`}
         {...props}
@@ -146,7 +146,7 @@ const Select = ({ label, children, className = '', ...props }) => {
   return (
     <div className="space-y-1">
       {label && <label className="block text-sm font-medium text-gray-300">{label}</label>}
-      <select 
+      <select
         className={`w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${className}`}
         {...props}
       >
@@ -158,10 +158,10 @@ const Select = ({ label, children, className = '', ...props }) => {
 
 function App() {
   // State Management
-  const [inventory, setInventory] = useState(() => 
+  const [inventory, setInventory] = useState(() =>
     JSON.parse(localStorage.getItem('festivalInventory')) || INITIAL_INVENTORY
   );
-  const [stages, setStages] = useState(() => 
+  const [stages, setStages] = useState(() =>
     JSON.parse(localStorage.getItem('festivalStages')) || INITIAL_STAGES
   );
   const [barcode, setBarcode] = useState('');
@@ -169,16 +169,16 @@ function App() {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [page, setPage] = useState('inventory');
   const [receiptItems, setReceiptItems] = useState([]);
-  
+
   // Modal states
   const [newItemModal, setNewItemModal] = useState(false);
-  const [newItemInfo, setNewItemInfo] = useState({ 
-    id: '', 
-    name: '', 
-    quantity: 1, 
-    unitQuantity: 1, 
-    unitType: '', 
-    description: '' 
+  const [newItemInfo, setNewItemInfo] = useState({
+    id: '',
+    name: '',
+    quantity: 1,
+    unitQuantity: 1,
+    unitType: '',
+    description: ''
   });
   const [detailedViewItem, setDetailedViewItem] = useState(null);
   const [deleteConfirmModal, setDeleteConfirmModal] = useState({ show: false, item: null });
@@ -189,7 +189,7 @@ function App() {
   const [stageAdjustments, setStageAdjustments] = useState({});
   const [addStockModal, setAddStockModal] = useState(false);
   const [stockItemInfo, setStockItemInfo] = useState({ id: '', quantity: 1 });
-  
+
   // Camera scanner state
   const [showCameraScanner, setShowCameraScanner] = useState(false);
   const [cameraError, setCameraError] = useState(null);
@@ -208,14 +208,14 @@ function App() {
   }, [stages]);
 
   useEffect(() => {
-    const isAnyModalOpen = newItemModal || deleteConfirmModal.show || showReceiptModal || 
-                          deleteStageConfirmModal.show || adjustStageModal.show || 
-                          showCameraScanner || addStockModal;
+    const isAnyModalOpen = newItemModal || deleteConfirmModal.show || showReceiptModal ||
+      deleteStageConfirmModal.show || adjustStageModal.show ||
+      showCameraScanner || addStockModal;
     if (page === 'inventory' && !isAnyModalOpen) {
       barcodeInputRef.current?.focus();
     }
-  }, [page, newItemModal, deleteConfirmModal, showReceiptModal, deleteStageConfirmModal, 
-      adjustStageModal, showCameraScanner, addStockModal]);
+  }, [page, newItemModal, deleteConfirmModal, showReceiptModal, deleteStageConfirmModal,
+    adjustStageModal, showCameraScanner, addStockModal]);
 
   // Helper Functions
   const showToast = (message, type = 'success') => {
@@ -230,20 +230,20 @@ function App() {
   const startCameraScan = () => {
     setShowCameraScanner(true);
     setCameraError(null);
-    
+
     setTimeout(() => {
       const qrCodeSuccessCallback = (decodedText) => {
         setBarcode(decodedText);
         stopCameraScan();
         const item = inventory.find(i => i.id === decodedText);
         if (!item) {
-          setNewItemInfo({ 
-            id: decodedText, 
-            name: '', 
-            quantity: 1, 
-            unitQuantity: 1, 
-            unitType: '', 
-            description: '' 
+          setNewItemInfo({
+            id: decodedText,
+            name: '',
+            quantity: 1,
+            unitQuantity: 1,
+            unitType: '',
+            description: ''
           });
           setNewItemModal(true);
           showToast('Scanned new item. Please add details.', 'info');
@@ -317,13 +317,13 @@ function App() {
         }));
         showToast(`Added 1 unit to ${item.name}. Total: ${item.total + 1}`, 'success');
       } else {
-        setNewItemInfo({ 
-          id: barcode, 
-          name: '', 
-          quantity: 1, 
-          unitQuantity: 1, 
-          unitType: '', 
-          description: '' 
+        setNewItemInfo({
+          id: barcode,
+          name: '',
+          quantity: 1,
+          unitQuantity: 1,
+          unitType: '',
+          description: ''
         });
         setNewItemModal(true);
         showToast('Scanned new item. Please add details to complete import.', 'info');
@@ -338,7 +338,7 @@ function App() {
 
       setReceiptItems(currentItems => {
         const existingItemIndex = currentItems.findIndex(i => i.id === barcode);
-        const newItems = existingItemIndex > -1 
+        const newItems = existingItemIndex > -1
           ? currentItems.map((i, idx) => idx === existingItemIndex ? { ...i, quantity: i.quantity + 1 } : i)
           : [...currentItems, { ...item, quantity: 1 }];
         return newItems;
@@ -370,13 +370,13 @@ function App() {
     setInventory([...inventory, newItem]);
     showToast(`New item added: ${newItem.name}`, 'success');
     setNewItemModal(false);
-    setNewItemInfo({ 
-      id: '', 
-      name: '', 
-      quantity: 1, 
-      unitQuantity: 1, 
-      unitType: '', 
-      description: '' 
+    setNewItemInfo({
+      id: '',
+      name: '',
+      quantity: 1,
+      unitQuantity: 1,
+      unitType: '',
+      description: ''
     });
   };
 
@@ -397,7 +397,7 @@ function App() {
       showToast('Please provide a valid barcode and quantity.', 'error');
       return;
     }
-    
+
     const item = inventory.find(i => i.id === stockItemInfo.id);
     if (!item) {
       showToast('Item not found. Please add it first.', 'error');
@@ -414,7 +414,7 @@ function App() {
       }
       return invItem;
     }));
-    
+
     showToast(`Added ${stockItemInfo.quantity} units to ${item.name}`, 'success');
     setAddStockModal(false);
     setStockItemInfo({ id: '', quantity: 1 });
@@ -457,7 +457,7 @@ function App() {
   };
 
   const adjustReceiptQuantity = (itemId, change) => {
-    setReceiptItems(currentItems => 
+    setReceiptItems(currentItems =>
       currentItems.map(item => {
         if (item.id === itemId) {
           const newQuantity = Math.max(1, item.quantity + change);
@@ -492,7 +492,7 @@ function App() {
   const confirmDeleteStage = () => {
     const { stageName } = deleteStageConfirmModal;
     const updatedStages = stages.filter(stage => stage !== stageName);
-    
+
     const updatedInventory = inventory.map(item => {
       if (item.usage[stageName]) {
         const newUsage = { ...item.usage };
@@ -515,18 +515,36 @@ function App() {
   // Export Functions
   const exportToExcel = () => {
     try {
-      const ws = XLSX.utils.json_to_sheet(inventory.map(item => ({
-        'Barcode ID': item.id,
-        'Item Name': item.name,
-        'Description': item.description || '',
-        'Unit Quantity': item.unitQuantity || '',
-        'Unit Type': item.unitType || '',
-        'Total Quantity': item.total,
-        'Remaining': item.remaining,
-        'Total Units Available': item.unitQuantity ? (item.remaining * item.unitQuantity).toLocaleString() : '',
-        'Usage': Object.entries(item.usage).map(([stage, qty]) => `${stage}: ${qty}`).join(', ') || 'None'
-      })));
-      
+      // Build header: static columns + one column per stage
+      const stageHeaders = stages;
+      const wsData = [
+        [
+          'Barcode ID',
+          'Item Name',
+          'Description',
+          'Unit Quantity',
+          'Unit Type',
+          'Total Quantity',
+          'Remaining',
+          'Total Units Available',
+          ...stageHeaders
+        ]
+      ];
+      // Build rows
+      inventory.forEach(item => {
+        wsData.push([
+          item.id,
+          item.name,
+          item.description || '',
+          item.unitQuantity || '',
+          item.unitType || '',
+          item.total,
+          item.remaining,
+          item.unitQuantity ? (item.remaining * item.unitQuantity).toLocaleString() : '',
+          ...stageHeaders.map(stage => item.usage[stage] || 0)
+        ]);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Inventory");
       XLSX.writeFile(wb, "festival_inventory.xlsx");
@@ -619,7 +637,7 @@ function App() {
                 <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                   <ArrowLeftRight className="w-6 h-6 text-pink-400" /> Transaction
                 </h2>
-                
+
                 <div className="flex items-center gap-2 mb-4">
                   <input
                     type="checkbox"
@@ -630,7 +648,7 @@ function App() {
                   />
                   <label htmlFor="importMode" className="text-sm">Import Mode</label>
                 </div>
-                
+
                 <form onSubmit={handleScan}>
                   <label htmlFor="barcode-scanner" className="block text-sm font-medium text-gray-300 mb-2">
                     1. Scan Items
@@ -653,7 +671,7 @@ function App() {
                     </button>
                   </div>
                 </form>
-                
+
                 {!isImportMode && (
                   <div className="mt-4">
                     <label htmlFor="stage-select" className="block text-sm font-medium text-gray-300 mb-2">
@@ -673,7 +691,7 @@ function App() {
                     </select>
                   </div>
                 )}
-                
+
                 {!isImportMode && (
                   <Button
                     onClick={() => setShowReceiptModal(true)}
@@ -684,20 +702,20 @@ function App() {
                     <ListChecks /> Finalize Transaction ({receiptItems.length})
                   </Button>
                 )}
-                
+
                 {isImportMode && (
                   <div className="text-sm text-blue-400 bg-blue-900/20 p-3 rounded-lg mt-4">
                     <Info size={16} className="inline mr-2" />
                     Import Mode: Scanning will add items to inventory instead of creating transactions.
                   </div>
                 )}
-                
+
                 <div className="relative flex py-5 items-center">
                   <div className="flex-grow border-t border-gray-600"></div>
                   <span className="flex-shrink mx-4 text-gray-400">Or</span>
                   <div className="flex-grow border-t border-gray-600"></div>
                 </div>
-                
+
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button onClick={() => setNewItemModal(true)} className="w-full">
                     <Plus /> Add New Item
@@ -776,7 +794,36 @@ function App() {
         {page === 'stages' && (
           <div>
             <h1 className="text-3xl font-bold mb-6">Stage Management</h1>
-            
+
+            {/* Stage Usage Overview Table */}
+            <div className="glass-card p-6 mb-8">
+              <h2 className="text-xl font-semibold mb-4">Stage Usage Overview</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm text-left">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-1 border-b border-gray-700">Item</th>
+                      {stages.map(stage => (
+                        <th key={stage} className="px-2 py-1 border-b border-gray-700">{stage}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inventory.map(item => (
+                      <tr key={item.id}>
+                        <td className="px-2 py-1 border-b border-gray-800 font-medium text-white">{item.name}</td>
+                        {stages.map(stage => (
+                          <td key={stage} className="px-2 py-1 border-b border-gray-800 text-center">
+                            {item.usage[stage] ? item.usage[stage] : 0}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="glass-card p-6">
                 <h2 className="text-xl font-semibold mb-4">Add New Stage</h2>
@@ -792,7 +839,7 @@ function App() {
                   </Button>
                 </form>
               </div>
-              
+
               <div className="glass-card p-6">
                 <h2 className="text-xl font-semibold mb-4">Existing Stages</h2>
                 <div className="space-y-2">
@@ -837,7 +884,7 @@ function App() {
                   </Button>
                 </div>
               </div>
-              
+
               <div className="glass-card p-6">
                 <h2 className="text-xl font-semibold mb-4">Data Management</h2>
                 <div className="space-y-4">
@@ -897,19 +944,19 @@ function App() {
           <Input
             label="Barcode ID"
             value={newItemInfo.id}
-            onChange={(e) => setNewItemInfo({...newItemInfo, id: e.target.value})}
+            onChange={(e) => setNewItemInfo({ ...newItemInfo, id: e.target.value })}
             placeholder="Enter barcode ID"
           />
           <Input
             label="Item Name"
             value={newItemInfo.name}
-            onChange={(e) => setNewItemInfo({...newItemInfo, name: e.target.value})}
+            onChange={(e) => setNewItemInfo({ ...newItemInfo, name: e.target.value })}
             placeholder="Enter item name"
           />
           <Input
             label="Description (Optional)"
             value={newItemInfo.description}
-            onChange={(e) => setNewItemInfo({...newItemInfo, description: e.target.value})}
+            onChange={(e) => setNewItemInfo({ ...newItemInfo, description: e.target.value })}
             placeholder="Brief description of the item"
           />
           <div className="grid grid-cols-2 gap-4">
@@ -918,13 +965,13 @@ function App() {
               type="number"
               min="1"
               value={newItemInfo.unitQuantity}
-              onChange={(e) => setNewItemInfo({...newItemInfo, unitQuantity: parseInt(e.target.value) || 1})}
+              onChange={(e) => setNewItemInfo({ ...newItemInfo, unitQuantity: parseInt(e.target.value) || 1 })}
               placeholder="e.g., 1000"
             />
             <Input
               label="Unit Type"
               value={newItemInfo.unitType}
-              onChange={(e) => setNewItemInfo({...newItemInfo, unitType: e.target.value})}
+              onChange={(e) => setNewItemInfo({ ...newItemInfo, unitType: e.target.value })}
               placeholder="e.g., screws per box"
             />
           </div>
@@ -933,7 +980,7 @@ function App() {
             type="number"
             min="1"
             value={newItemInfo.quantity}
-            onChange={(e) => setNewItemInfo({...newItemInfo, quantity: parseInt(e.target.value) || 1})}
+            onChange={(e) => setNewItemInfo({ ...newItemInfo, quantity: parseInt(e.target.value) || 1 })}
             placeholder="How many units to add"
           />
           <div className="flex gap-2">
@@ -958,7 +1005,7 @@ function App() {
           <Input
             label="Barcode ID"
             value={stockItemInfo.id}
-            onChange={(e) => setStockItemInfo({...stockItemInfo, id: e.target.value})}
+            onChange={(e) => setStockItemInfo({ ...stockItemInfo, id: e.target.value })}
             placeholder="Enter barcode ID"
           />
           <Input
@@ -966,7 +1013,7 @@ function App() {
             type="number"
             min="1"
             value={stockItemInfo.quantity}
-            onChange={(e) => setStockItemInfo({...stockItemInfo, quantity: parseInt(e.target.value) || 1})}
+            onChange={(e) => setStockItemInfo({ ...stockItemInfo, quantity: parseInt(e.target.value) || 1 })}
           />
           <div className="flex gap-2">
             <Button onClick={handleAddStock} className="flex-1">
@@ -1099,14 +1146,14 @@ function App() {
                 <p className="text-sm text-gray-300 mt-2">{detailedViewItem.description}</p>
               )}
             </div>
-            
+
             {detailedViewItem.unitQuantity && detailedViewItem.unitType && (
               <div className="bg-green-900/20 p-3 rounded-lg">
                 <p className="text-sm text-green-400 font-medium">Unit Information</p>
                 <p className="text-green-300">{detailedViewItem.unitQuantity} {detailedViewItem.unitType}</p>
               </div>
             )}
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-400">Total Quantity</p>
@@ -1117,7 +1164,7 @@ function App() {
                 <p className="font-medium">{detailedViewItem.remaining}</p>
               </div>
             </div>
-            
+
             {detailedViewItem.unitQuantity && detailedViewItem.unitType && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -1134,7 +1181,7 @@ function App() {
                 </div>
               </div>
             )}
-            
+
             {Object.keys(detailedViewItem.usage).length > 0 && (
               <div>
                 <p className="text-sm text-gray-400 mb-2">Stage Usage</p>
@@ -1155,7 +1202,7 @@ function App() {
                 </div>
               </div>
             )}
-            
+
             <Button onClick={() => setDetailedViewItem(null)} variant="ghost" className="w-full">
               Close
             </Button>
