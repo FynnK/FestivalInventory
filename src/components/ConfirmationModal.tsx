@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react'
+import { useI18n } from '../i18n'
 
 export default function ConfirmationModal({
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   onConfirm,
   onCancel,
   loading,
@@ -21,6 +22,9 @@ export default function ConfirmationModal({
   danger?: boolean
   children?: ReactNode
 }) {
+  const { t } = useI18n()
+  const resolvedConfirmLabel = confirmLabel ?? t('modal_confirm_default')
+  const resolvedCancelLabel = cancelLabel ?? t('modal_cancel_default')
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-card border border-border rounded-xl p-6 max-w-sm mx-4 shadow-2xl w-full">
@@ -33,7 +37,7 @@ export default function ConfirmationModal({
             className="flex-1 px-4 py-2 rounded-lg border border-input text-foreground hover:bg-accent transition-colors font-medium"
             disabled={loading}
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button
             onClick={onConfirm}
@@ -44,7 +48,7 @@ export default function ConfirmationModal({
             }`}
             disabled={loading}
           >
-            {loading ? '...' : confirmLabel}
+            {loading ? '...' : resolvedConfirmLabel}
           </button>
         </div>
       </div>

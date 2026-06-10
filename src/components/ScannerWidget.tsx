@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Camera, CameraOff } from 'lucide-react'
 import { Html5Qrcode } from 'html5-qrcode'
+import { useI18n } from '../i18n'
 
 export default function ScannerWidget({ onScan }: { onScan: (barcode: string) => void }) {
+  const { t } = useI18n()
   const [isOpen, setIsOpen] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
@@ -26,7 +28,7 @@ export default function ScannerWidget({ onScan }: { onScan: (barcode: string) =>
         () => {}
       )
     } catch (err: any) {
-      setCameraError(err?.message || 'Failed to start camera')
+      setCameraError(err?.message || t('scanner_error_start_failed'))
       setIsScanning(false)
     }
   }
@@ -50,7 +52,7 @@ export default function ScannerWidget({ onScan }: { onScan: (barcode: string) =>
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       <button onClick={toggle} className="w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-accent transition-colors">
-        <span className="flex items-center gap-2"><Camera size={16} className="text-muted-foreground" />Webcam Scanner</span>
+        <span className="flex items-center gap-2"><Camera size={16} className="text-muted-foreground" />{t('scanner_heading')}</span>
         <span className="text-xs text-muted-foreground">{isOpen ? '▲' : '▼'}</span>
       </button>
       {isOpen && (
@@ -59,10 +61,10 @@ export default function ScannerWidget({ onScan }: { onScan: (barcode: string) =>
             <div id={containerId} className="w-full aspect-square bg-background rounded-lg overflow-hidden" />
             {cameraError && <p className="text-xs text-destructive mt-2">{cameraError}</p>}
             {!isScanning && !cameraError && (
-              <button onClick={startScanner} className="w-full mt-2 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">Start Camera</button>
+              <button onClick={startScanner} className="w-full mt-2 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">{t('scanner_start_camera_button')}</button>
             )}
             {isScanning && (
-              <button onClick={stopScanner} className="w-full mt-2 px-3 py-1.5 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity"><CameraOff size={14} className="inline mr-1" /> Stop</button>
+              <button onClick={stopScanner} className="w-full mt-2 px-3 py-1.5 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity"><CameraOff size={14} className="inline mr-1" /> {t('scanner_stop_button')}</button>
             )}
           </div>
         </div>
