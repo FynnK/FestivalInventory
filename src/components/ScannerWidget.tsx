@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Camera, CameraOff } from 'lucide-react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { useI18n } from '../i18n'
@@ -9,31 +9,14 @@ export default function ScannerWidget({ onScan }: { onScan: (barcode: string) =>
   const [isScanning, setIsScanning] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
   const scannerRef = useRef<Html5Qrcode | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const containerId = 'qr-reader-widget'
 
   useEffect(() => {
     return () => { stopScanner() }
   }, [])
 
-  const startScanner = async () => {
-    setCameraError(null)
-    try {
-      const scanner = new Html5Qrcode(containerId)
-      scannerRef.current = scanner
-      setIsScanning(true)
-      await scanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 200, height: 200 } },
-        (decodedText) => { onScan(decodedText) },
-        () => {}
-      )
-    } catch (err: any) {
-      setCameraError(err?.message || t('scanner_error_start_failed'))
-      setIsScanning(false)
-    }
-  }
-
-  const stopScanner = async () => {
+  const stopScanner = useCallback(async () => {
     if (scannerRef.current) {
       try {
         if (scannerRef.current.isScanning) await scannerRef.current.stop()
@@ -42,12 +25,76 @@ export default function ScannerWidget({ onScan }: { onScan: (barcode: string) =>
       scannerRef.current = null
     }
     setIsScanning(false)
-  }
+  }, [])
+
+  const startScanner = useCallback(async () => {
+    setCameraError(null)
+    try {
+      if (!containerRef.current) {
+        setCameraError('Camera container not ready')
+        return
+      }
+
+      const scanner = new Html5Qrcode(containerId)
+      scannerRef.current = scanner
+
+      const cameras = await Html5Qrcode.getCameras()
+      if (!cameras || cameras.length === 0) {
+        setCameraError('No cameras found on this device')
+        setIsScanning(false)
+        return
+      }
+
+      setIsScanning(true)
+
+      try {
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+          (decodedText) => { onScan(decodedText) },
+          () => {}
+        )
+      } catch {
+        if (cameras.length > 0) {
+          await scanner.start(
+            cameras[0].id,
+            { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+            (decodedText) => { onScan(decodedText) },
+            () => {}
+          )
+        } else {
+          throw new Error('No working camera found')
+        }
+      }
+    } catch (err: any) {
+      const msg = err?.message || String(err) || t('scanner_error_start_failed')
+      if (msg.includes('Permission') || msg.includes('permission') || msg.includes('NotAllowed')) {
+        setCameraError('Camera permission denied. Please allow camera access in your browser settings.')
+      } else if (msg.includes('NotFound') || msg.includes('not found') || msg.includes('No cameras')) {
+        setCameraError('No camera found on this device.')
+      } else {
+        setCameraError(msg)
+      }
+      setIsScanning(false)
+    }
+  }, [onScan, t])
 
   const toggle = () => {
-    if (isOpen) { stopScanner(); setIsOpen(false) }
-    else { setIsOpen(true); setTimeout(startScanner, 200) }
+    if (isOpen) {
+      stopScanner()
+      setIsOpen(false)
+    } else {
+      setIsOpen(true)
+      setCameraError(null)
+    }
   }
+
+  useEffect(() => {
+    if (isOpen && !isScanning && !cameraError) {
+      const timer = setTimeout(startScanner, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen])
 
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
@@ -58,7 +105,7 @@ export default function ScannerWidget({ onScan }: { onScan: (barcode: string) =>
       {isOpen && (
         <div className="px-3 pb-3 border-t border-border">
           <div className="mt-3">
-            <div id={containerId} className="w-full aspect-square bg-background rounded-lg overflow-hidden" />
+            <div ref={containerRef} id={containerId} className="w-full aspect-square bg-background rounded-lg overflow-hidden" />
             {cameraError && <p className="text-xs text-destructive mt-2">{cameraError}</p>}
             {!isScanning && !cameraError && (
               <button onClick={startScanner} className="w-full mt-2 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">{t('scanner_start_camera_button')}</button>
