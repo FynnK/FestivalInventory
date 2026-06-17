@@ -303,5 +303,6 @@ export const en: Record<string, string> = {
   remote_scanner_phone_bar: 'Connected as remote scanner',
   remote_scanner_retry: 'Retry',
   remote_scanner_enter_ip: 'Enter the relay server IP shown in the terminal:',
+  remote_scanner_enter_port: 'Relay server port:',
   remote_scanner_start_button: 'Start Remote Scanner',
 }

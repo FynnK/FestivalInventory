@@ -4,7 +4,7 @@ import QRCode from 'qrcode'
 import { useI18n } from '../i18n'
 import type { PeerStatus } from '../hooks/usePeerSync'
 
-const RELAY_PORT = 3001
+const STORAGE_KEY_PORT = 'festivalInventory_relayPort'
 
 function sanitizeIp(raw: string): string {
   return raw
@@ -12,6 +12,14 @@ function sanitizeIp(raw: string): string {
     .replace(/^wss:\/\//, '')
     .replace(/:\d+$/, '')
     .trim()
+}
+
+function loadPort(): string {
+  try { return localStorage.getItem(STORAGE_KEY_PORT) || '3001' } catch { return '3001' }
+}
+
+function savePort(p: string) {
+  try { localStorage.setItem(STORAGE_KEY_PORT, p) } catch {}
 }
 
 export default function RemoteScannerPanel({
@@ -24,18 +32,19 @@ export default function RemoteScannerPanel({
   status: PeerStatus
   roomId: string | null
   relayIp: string | null
-  onStart: (ip: string) => void
+  onStart: (ip: string, port: string) => void
   onStop: () => void
 }) {
   const { t } = useI18n()
   const [ipInput, setIpInput] = useState('')
+  const [portInput, setPortInput] = useState(loadPort)
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
 
   const isIdle = status === 'idle'
   const isConnected = status === 'connected'
 
   const connectionUrl = relayIp && roomId
-    ? `${window.location.origin}/?remote=${relayIp}:${RELAY_PORT}#${roomId}`
+    ? `${window.location.origin}/?remote=${relayIp}:${portInput}#${roomId}`
     : null
 
   useEffect(() => {
@@ -52,7 +61,8 @@ export default function RemoteScannerPanel({
     if (!isIdle) { onStop(); return }
     const cleaned = sanitizeIp(ipInput)
     if (!cleaned) return
-    onStart(cleaned)
+    savePort(portInput)
+    onStart(cleaned, portInput)
   }
 
   return (
@@ -68,6 +78,15 @@ export default function RemoteScannerPanel({
             value={ipInput}
             onChange={(e) => setIpInput(e.target.value)}
             placeholder="192.168.1.50"
+            className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary font-mono"
+            onKeyDown={(e) => { if (e.key === 'Enter') handleToggle() }}
+          />
+          <p className="text-xs text-muted-foreground">{t('remote_scanner_enter_port')}</p>
+          <input
+            type="text"
+            value={portInput}
+            onChange={(e) => setPortInput(e.target.value)}
+            placeholder="3001"
             className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary font-mono"
             onKeyDown={(e) => { if (e.key === 'Enter') handleToggle() }}
           />

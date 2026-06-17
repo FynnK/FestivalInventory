@@ -236,8 +236,8 @@ export default function App() {
 
   useScanner(handleScan, true)
 
-  const handleStartRemoteScanner = useCallback((ip: string) => {
-    peerSync.startHosting(ip, handleScan)
+  const handleStartRemoteScanner = useCallback((ip: string, port: string) => {
+    peerSync.startHosting(ip, port, handleScan)
   }, [peerSync, handleScan])
 
   const handleRemoteScan = useCallback((barcode: string) => {

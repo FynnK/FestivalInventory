@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 
-const RELAY_PORT = 3001
 const ROOM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
 
 export type PeerStatus = 'idle' | 'connecting' | 'connected' | 'error'
@@ -31,13 +30,13 @@ export function usePeerSync() {
     }
   }, [])
 
-  const startHosting = useCallback((ip: string, onBarcode: (barcode: string) => void) => {
+  const startHosting = useCallback((ip: string, port: string, onBarcode: (barcode: string) => void) => {
     cleanup()
     onBarcodeRef.current = onBarcode
     const roomId = generateRoomId()
     setState({ status: 'connecting', roomId, relayIp: ip, error: null })
 
-    const ws = new WebSocket(`ws://127.0.0.1:${RELAY_PORT}?room=${roomId}&role=desktop`)
+    const ws = new WebSocket(`ws://127.0.0.1:${port}?room=${roomId}&role=desktop`)
     wsRef.current = ws
 
     ws.onopen = () => setState({ status: 'connected', roomId, relayIp: ip, error: null })
