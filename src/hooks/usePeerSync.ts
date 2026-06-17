@@ -61,15 +61,15 @@ export function usePeerSync() {
 
   const connectToHost = useCallback((ip: string, port: string, roomId: string) => {
     cleanup()
+    let timedOut = false
     setState({ status: 'connecting', roomId, relayIp: ip, error: null })
 
     const ws = new WebSocket(`ws://${ip}:${port}?room=${roomId}&role=phone`)
     wsRef.current = ws
     const timeout = setTimeout(() => {
-      if (state.status === 'connecting') {
-        ws.close()
-        setState({ status: 'error', roomId, relayIp: ip, error: 'Connection timed out.' })
-      }
+      timedOut = true
+      ws.close()
+      setState({ status: 'error', roomId, relayIp: ip, error: 'Connection timed out.' })
     }, 10000)
 
     ws.onopen = () => {
@@ -83,7 +83,9 @@ export function usePeerSync() {
     ws.onclose = () => {
       clearTimeout(timeout)
       wsRef.current = null
-      setState({ status: 'idle', roomId: null, relayIp: null, error: null })
+      if (!timedOut) {
+        setState({ status: 'idle', roomId: null, relayIp: null, error: null })
+      }
     }
   }, [cleanup])
 
