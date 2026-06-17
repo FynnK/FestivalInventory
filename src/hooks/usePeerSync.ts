@@ -1,111 +1,104 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Peer } from 'peerjs'
 
-export type PeerStatus = 'idle' | 'hosting' | 'connecting' | 'connected' | 'error'
+const RELAY_PORT = 3001
+const ROOM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+
+export type PeerStatus = 'idle' | 'connecting' | 'connected' | 'error'
 
 export interface PeerState {
   status: PeerStatus
-  peerId: string | null
+  roomId: string | null
+  relayIp: string | null
   error: string | null
 }
 
+function generateRoomId() {
+  let result = ''
+  for (let i = 0; i < 6; i++)
+    result += ROOM_CHARS.charAt(Math.floor(Math.random() * ROOM_CHARS.length))
+  return result
+}
+
 export function usePeerSync() {
-  const [state, setState] = useState<PeerState>({ status: 'idle', peerId: null, error: null })
-  const peerRef = useRef<Peer | null>(null)
-  const connRef = useRef<any>(null)
+  const [state, setState] = useState<PeerState>({ status: 'idle', roomId: null, relayIp: null, error: null })
+  const wsRef = useRef<WebSocket | null>(null)
   const onBarcodeRef = useRef<((barcode: string) => void) | null>(null)
 
   const cleanup = useCallback(() => {
-    if (connRef.current) {
-      connRef.current.close()
-      connRef.current = null
-    }
-    if (peerRef.current) {
-      peerRef.current.destroy()
-      peerRef.current = null
+    if (wsRef.current) {
+      wsRef.current.close()
+      wsRef.current = null
     }
   }, [])
 
-  const generateId = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-    let result = ''
-    for (let i = 0; i < 6; i++)
-      result += chars.charAt(Math.floor(Math.random() * chars.length))
-    return result
-  }
-
-  const startHosting = useCallback((onBarcode: (barcode: string) => void) => {
+  const startHosting = useCallback((ip: string, onBarcode: (barcode: string) => void) => {
     cleanup()
     onBarcodeRef.current = onBarcode
-    const roomId = generateId()
-    setState({ status: 'hosting', peerId: roomId, error: null })
-    const peer = new Peer(roomId)
-    peerRef.current = peer
+    const roomId = generateRoomId()
+    setState({ status: 'connecting', roomId, relayIp: ip, error: null })
 
-    peer.on('connection', (conn) => {
-      connRef.current = conn
-      setState({ status: 'connected', peerId: roomId, error: null })
-      conn.on('data', (data: any) => {
-        if (typeof data === 'string') onBarcodeRef.current?.(data)
-      })
-      conn.on('close', () => {
-        connRef.current = null
-        setState({ status: 'hosting', peerId: roomId, error: null })
-      })
-    })
+    const ws = new WebSocket(`ws://127.0.0.1:${RELAY_PORT}?room=${roomId}&role=desktop`)
+    wsRef.current = ws
 
-    peer.on('error', (err) => {
-      setState({ status: 'error', peerId: roomId, error: err.message })
-    })
+    ws.onopen = () => setState({ status: 'connected', roomId, relayIp: ip, error: null })
+    ws.onerror = () => setState({ status: 'error', roomId, relayIp: ip, error: 'WebSocket connection failed.' })
+    ws.onclose = () => {
+      wsRef.current = null
+      setState({ status: 'idle', roomId: null, relayIp: null, error: null })
+    }
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data)
+        if (msg.type === 'BARCODE') onBarcodeRef.current?.(msg.payload)
+      } catch {}
+    }
   }, [cleanup])
 
   const stopHosting = useCallback(() => {
     cleanup()
-    setState({ status: 'idle', peerId: null, error: null })
+    setState({ status: 'idle', roomId: null, relayIp: null, error: null })
   }, [cleanup])
 
-  const connectToHost = useCallback((roomId: string) => {
+  const connectToHost = useCallback((ip: string, port: string, roomId: string) => {
     cleanup()
-    setState({ status: 'connecting', peerId: roomId, error: null })
-    const peer = new Peer()
-    peerRef.current = peer
-    const conn = peer.connect(roomId, { reliable: true })
-    connRef.current = conn
+    setState({ status: 'connecting', roomId, relayIp: ip, error: null })
 
+    const ws = new WebSocket(`ws://${ip}:${port}?room=${roomId}&role=phone`)
+    wsRef.current = ws
     const timeout = setTimeout(() => {
-      setState({ status: 'error', peerId: roomId, error: 'Connection timed out. Make sure the desktop is hosting a remote scanner.' })
-    }, 15000)
+      if (state.status === 'connecting') {
+        ws.close()
+        setState({ status: 'error', roomId, relayIp: ip, error: 'Connection timed out.' })
+      }
+    }, 10000)
 
-    const onOpen = () => {
+    ws.onopen = () => {
       clearTimeout(timeout)
-      setState({ status: 'connected', peerId: roomId, error: null })
+      setState({ status: 'connected', roomId, relayIp: ip, error: null })
     }
-    const onError = (err: any) => {
+    ws.onerror = () => {
       clearTimeout(timeout)
-      setState({ status: 'error', peerId: roomId, error: err.message })
+      setState({ status: 'error', roomId, relayIp: ip, error: 'Connection failed.' })
     }
-    const onClose = () => {
+    ws.onclose = () => {
       clearTimeout(timeout)
-      connRef.current = null
-      setState({ status: 'idle', peerId: null, error: null })
+      wsRef.current = null
+      setState({ status: 'idle', roomId: null, relayIp: null, error: null })
     }
-
-    conn.on('open', onOpen)
-    conn.on('error', onError)
-    conn.on('close', onClose)
-    peer.on('error', onError)
   }, [cleanup])
 
   const disconnect = useCallback(() => {
     cleanup()
-    setState({ status: 'idle', peerId: null, error: null })
+    setState({ status: 'idle', roomId: null, relayIp: null, error: null })
   }, [cleanup])
 
   const sendBarcode = useCallback((barcode: string) => {
-    if (connRef.current?.open) connRef.current.send(barcode)
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'BARCODE', payload: barcode }))
+    }
   }, [])
 
   useEffect(() => cleanup, [cleanup])
 
-  return { state, startHosting, stopHosting, connectToHost, disconnect, sendBarcode }
+  return { state, startHosting, stopHosting, connectToHost, disconnect, sendBarcode, generateRoomId }
 }

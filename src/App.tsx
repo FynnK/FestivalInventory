@@ -166,7 +166,9 @@ export default function App() {
     const remote = params.get('remote')
     if (remote) {
       setRemoteMode(remote)
-      peerSync.connectToHost(remote)
+      const [ipPort, roomId] = remote.split('#')
+      const [ip, port] = ipPort.split(':')
+      peerSync.connectToHost(ip, port || '3001', roomId)
     }
   }, [])
 
@@ -234,8 +236,8 @@ export default function App() {
 
   useScanner(handleScan, true)
 
-  const handleStartRemoteScanner = useCallback(() => {
-    peerSync.startHosting(handleScan)
+  const handleStartRemoteScanner = useCallback((ip: string) => {
+    peerSync.startHosting(ip, handleScan)
   }, [peerSync, handleScan])
 
   const handleRemoteScan = useCallback((barcode: string) => {
@@ -530,7 +532,11 @@ export default function App() {
           </span>
           <div className="flex items-center gap-2">
             {peerSync.state.status === 'error' && remoteMode && (
-              <button onClick={() => peerSync.connectToHost(remoteMode!)}
+              <button onClick={() => {
+                const [ipPort, roomId] = remoteMode.split('#')
+                const [ip, port] = ipPort.split(':')
+                peerSync.connectToHost(ip, port || '3001', roomId)
+              }}
                 className="px-2 py-0.5 rounded bg-red-600 hover:bg-red-500 transition-colors font-semibold">
                 {t('remote_scanner_retry')}
               </button>
@@ -713,7 +719,8 @@ export default function App() {
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('remote_scanner_heading')}</h3>
               <RemoteScannerPanel
                 status={peerSync.state.status}
-                peerId={peerSync.state.peerId}
+                roomId={peerSync.state.roomId}
+                relayIp={peerSync.state.relayIp}
                 onStart={handleStartRemoteScanner}
                 onStop={peerSync.stopHosting}
               />

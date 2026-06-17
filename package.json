@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "predeploy": "pnpm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "relay": "node relay.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -53,8 +54,8 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^1.20.0",
     "next-themes": "^0.4.6",
-    "peerjs": "^1.5.5",
     "qrcode": "^1.5.4",
+    "ws": "^8.18.2",
     "react": "^19.2.7",
     "react-day-picker": "10.0.1",
     "react-dom": "^19.2.7",
