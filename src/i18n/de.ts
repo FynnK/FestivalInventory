@@ -15,6 +15,7 @@ export const de: Record<string, string> = {
   sidebar_import_mode_on: 'AN',
   sidebar_import_mode_off: 'AUS',
   sidebar_import_mode_hint: 'Scannen fügt Artikel zum Bestand hinzu. Unbekannte Barcodes öffnen das Hinzufügen-Formular.',
+  sidebar_settings_heading: 'Einstellungen',
   sidebar_bulk_import_button: 'Stapelimport',
 
   // Toast messages

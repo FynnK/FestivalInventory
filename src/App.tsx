@@ -3,7 +3,7 @@ import {
   ScanLine, Plus, AlertTriangle,
   Download, Upload, Tent, Warehouse,
   BarChart3, History, Trash2, FileSpreadsheet,
-  Smartphone, Maximize2, Minimize2,
+  Smartphone, Maximize2, Minimize2, Settings, Database,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import {
@@ -42,7 +42,7 @@ interface ToastState {
   type: ToastType
 }
 
-type View = 'inventory' | 'stages' | 'transactions' | 'reports'
+type View = 'inventory' | 'stages' | 'transactions' | 'reports' | 'settings'
 
 interface CartEntry {
   item: Item
@@ -574,12 +574,13 @@ export default function App() {
         onToggleDark={() => setDarkMode(d => !d)}
       />
 
-      <div className="flex items-center gap-1 px-4 py-1.5 border-b border-border bg-card">
+      <div className="flex flex-wrap items-center gap-1 px-4 py-1.5 border-b border-border bg-card">
         {[
           { id: 'inventory' as const, label: t('tab_inventory'), icon: Warehouse },
           { id: 'stages' as const, label: t('tab_stages'), icon: Tent },
           { id: 'transactions' as const, label: t('tab_ledger'), icon: History },
           { id: 'reports' as const, label: t('tab_reports'), icon: BarChart3 },
+          { id: 'settings' as const, label: t('sidebar_settings_heading'), icon: Settings },
         ].map(tab => (
           <button
             key={tab.id}
@@ -618,12 +619,6 @@ export default function App() {
               <FileSpreadsheet size={16} /> {t('sidebar_bulk_import_button')}
             </button>
             <ScannedItemPanel cart={cart} onUpdateQty={handleUpdateCartQty} onAddQty={handleAddQty} onRemove={handleRemoveFromCart} onClearCart={handleClearCart} onCheckout={handleCheckout} stageName={activeStage?.name} />
-            <RemoteScannerPanel
-              status={peerSync.state.status}
-              peerId={peerSync.state.peerId}
-              onStart={handleStartRemoteScanner}
-              onStop={peerSync.stopHosting}
-            />
             <CrewSelector stages={stages} activeStageId={activeStageId} onSelect={setActiveStageId} onAdd={handleAddStage} onDelete={handleDeleteStage} />
           </aside>
           <main className="flex-1 p-4 overflow-hidden">
@@ -699,7 +694,6 @@ export default function App() {
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('reports_import_heading')}</h3>
               <div className="space-y-2">
                 <button onClick={handleImportJson} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-input text-foreground font-medium text-sm hover:bg-accent transition-colors"><Upload size={16} /> {t('reports_import_json_button')}</button>
-                <button onClick={() => setSeedConfirm(true)} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-input text-foreground font-medium text-sm hover:bg-accent transition-colors"><Plus size={16} /> {t('reports_load_sample_data_button')}</button>
               </div>
             </div>
             {burnRateData.length > 0 && (
@@ -718,10 +712,30 @@ export default function App() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {view === 'settings' && (
+        <div className="flex-1 overflow-y-auto p-6">
+          <h2 className="text-xl font-bold mb-4">{t('sidebar_settings_heading')}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
+            <div className="bg-card border border-border rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('remote_scanner_heading')}</h3>
+              <RemoteScannerPanel
+                status={peerSync.state.status}
+                peerId={peerSync.state.peerId}
+                onStart={handleStartRemoteScanner}
+                onStop={peerSync.stopHosting}
+              />
+            </div>
             <div className="bg-card border border-destructive/30 rounded-xl p-5 md:col-span-2">
               <h3 className="text-sm font-semibold text-destructive uppercase tracking-wider mb-3">{t('reports_danger_zone_heading')}</h3>
               <p className="text-sm text-muted-foreground mb-3">{t('reports_danger_zone_description')}</p>
-              <button onClick={() => setClearDbConfirm(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-destructive/10 text-destructive border border-destructive/30 font-medium text-sm hover:bg-destructive/20 transition-colors"><Trash2 size={16} /> {t('reports_clear_database_button')}</button>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => setSeedConfirm(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-input text-foreground font-medium text-sm hover:bg-accent transition-colors"><Database size={16} /> {t('reports_load_sample_data_button')}</button>
+                <button onClick={() => setClearDbConfirm(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-destructive/10 text-destructive border border-destructive/30 font-medium text-sm hover:bg-destructive/20 transition-colors"><Trash2 size={16} /> {t('reports_clear_database_button')}</button>
+              </div>
             </div>
           </div>
         </div>

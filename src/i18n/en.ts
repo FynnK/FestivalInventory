@@ -15,6 +15,7 @@ export const en: Record<string, string> = {
   sidebar_import_mode_on: 'ON',
   sidebar_import_mode_off: 'OFF',
   sidebar_import_mode_hint: 'Scanning adds consumables to stock. Rental items trigger return from stage.',
+  sidebar_settings_heading: 'Settings',
   sidebar_bulk_import_button: 'Bulk Import',
 
   // Toast messages
