@@ -44,7 +44,7 @@ export default function RemoteScannerPanel({
   const isConnected = status === 'connected'
 
   const connectionUrl = relayIp && roomId
-    ? `${window.location.origin}/?remote=${relayIp}:${portInput}#${roomId}`
+    ? `${window.location.origin}/?remote=${relayIp}:${portInput}&room=${roomId}`
     : null
 
   useEffect(() => {

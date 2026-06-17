@@ -138,6 +138,7 @@ export default function App() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const barcodeRef = useRef<HTMLInputElement>(null)
+  const remoteRoomIdRef = useRef<string | null>(null)
 
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
     setToast({ show: true, message, type })
@@ -164,11 +165,12 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const remote = params.get('remote')
-    if (remote) {
+    const roomQuery = params.get('room')
+    if (remote && roomQuery) {
       setRemoteMode(remote)
-      const [ipPort, roomId] = remote.split('#')
-      const [ip, port] = ipPort.split(':')
-      peerSync.connectToHost(ip, port || '3001', roomId)
+      remoteRoomIdRef.current = roomQuery
+      const [ip, port] = remote.split(':')
+      peerSync.connectToHost(ip, port || '3001', roomQuery)
     }
   }, [])
 
@@ -533,9 +535,8 @@ export default function App() {
           <div className="flex items-center gap-2">
             {peerSync.state.status === 'error' && remoteMode && (
               <button onClick={() => {
-                const [ipPort, roomId] = remoteMode.split('#')
-                const [ip, port] = ipPort.split(':')
-                peerSync.connectToHost(ip, port || '3001', roomId)
+                const [ip, port] = remoteMode.split(':')
+                peerSync.connectToHost(ip, port || '3001', remoteRoomIdRef.current || '')
               }}
                 className="px-2 py-0.5 rounded bg-red-600 hover:bg-red-500 transition-colors font-semibold">
                 {t('remote_scanner_retry')}
