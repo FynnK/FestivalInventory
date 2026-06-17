@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ScanLine, Plus, AlertTriangle,
-  Download, Upload, Tent, Warehouse,
-  BarChart3, History, Trash2, FileSpreadsheet,
+  Download, Upload, Trash2, FileSpreadsheet,
   Smartphone, Maximize2, Minimize2, Settings, Database,
   Sun, Moon, Globe,
 } from 'lucide-react'
@@ -566,28 +565,7 @@ export default function App() {
         </div>
       ) : (
         <>
-      <TopBar itemCount={items.length} />
-
-      <div className="flex flex-wrap items-center gap-1 px-4 py-1.5 border-b border-border bg-card">
-        {[
-          { id: 'inventory' as const, label: t('tab_inventory'), icon: Warehouse },
-          { id: 'stages' as const, label: t('tab_stages'), icon: Tent },
-          { id: 'transactions' as const, label: t('tab_ledger'), icon: History },
-          { id: 'reports' as const, label: t('tab_reports'), icon: BarChart3 },
-          { id: 'settings' as const, label: t('sidebar_settings_heading'), icon: Settings },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setView(tab.id)}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              view === tab.id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-            }`}
-          >
-            <tab.icon size={16} />
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <TopBar itemCount={items.length} view={view} onViewChange={setView} />
 
       {view === 'inventory' && (
         <div className="flex-1 flex gap-0 overflow-hidden">
