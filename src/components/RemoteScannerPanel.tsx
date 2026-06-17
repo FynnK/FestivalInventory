@@ -1,10 +1,18 @@
-import { useState, useEffect, useRef } from 'react'
-import { Smartphone, WifiOff, ScanLine } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Smartphone, ScanLine } from 'lucide-react'
 import QRCode from 'qrcode'
 import { useI18n } from '../i18n'
 import type { PeerStatus } from '../hooks/usePeerSync'
 
 const RELAY_PORT = 3001
+
+function sanitizeIp(raw: string): string {
+  return raw
+    .replace(/^ws:\/\//, '')
+    .replace(/^wss:\/\//, '')
+    .replace(/:\d+$/, '')
+    .trim()
+}
 
 export default function RemoteScannerPanel({
   status,
@@ -42,8 +50,9 @@ export default function RemoteScannerPanel({
 
   const handleToggle = () => {
     if (!isIdle) { onStop(); return }
-    if (!ipInput.trim()) return
-    onStart(ipInput.trim())
+    const cleaned = sanitizeIp(ipInput)
+    if (!cleaned) return
+    onStart(cleaned)
   }
 
   return (
@@ -63,7 +72,7 @@ export default function RemoteScannerPanel({
             onKeyDown={(e) => { if (e.key === 'Enter') handleToggle() }}
           />
           <button onClick={handleToggle}
-            disabled={!ipInput.trim()}
+            disabled={!sanitizeIp(ipInput)}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity">
             <ScanLine size={14} /> {t('remote_scanner_start_button')}
           </button>

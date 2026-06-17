@@ -43,6 +43,6 @@ wss.on('connection', (ws, req) => {
   })
 })
 
-console.log(`\n  Relay server running on port ${PORT}`)
-console.log(`  Desktop: ws://127.0.0.1:${PORT}`)
-console.log(`  Phone target IP: ${localIP}:${PORT}\n`)
+console.log(`\n  === Remote Scanner Relay ===`)
+console.log(`  Desktop browser: type this IP → ${localIP}`)
+console.log(`  (or open http://localhost:${PORT} in the future)\n`)
