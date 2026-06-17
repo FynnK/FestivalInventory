@@ -94,7 +94,7 @@ export const de: Record<string, string> = {
 
   // Modal - checkout review
   modal_checkout_review_title: 'Checkout-Übersicht',
-  modal_checkout_review_message: 'Auschecken an {stage}',
+  modal_checkout_review_message_prefix: 'Auschecken an',
   modal_checkout_total_items: 'Artikel gesamt:',
   modal_confirm_checkout: 'Checkout bestätigen',
 
@@ -185,6 +185,7 @@ export const de: Record<string, string> = {
   inventory_add_item_button: 'Artikel hinzufügen',
   inventory_no_match_filters: 'Keine Artikel entsprechen Ihren Filtern',
   inventory_no_items: 'Keine Artikel im Inventar',
+  inventory_filter_unreturned: 'Nicht zurückgegebene Leihgaben',
   inventory_table_header_barcode: 'Barcode',
   inventory_table_header_name: 'Name',
   inventory_table_header_category: 'Kategorie',
@@ -208,6 +209,7 @@ export const de: Record<string, string> = {
   edit_field_name_placeholder: 'Artikelname',
   edit_field_category_label: 'Kategorie',
   edit_field_category_placeholder: 'z.B. Hardware, Kabel, Verbrauchsgüter...',
+  edit_field_category_new: 'Neue Kategorie',
   edit_field_description_label: 'Beschreibung',
   edit_field_description_placeholder: 'Optionale Beschreibung',
   edit_field_serial_number_label: 'Seriennummer',
@@ -244,7 +246,9 @@ export const de: Record<string, string> = {
   // Top bar
   topbar_app_title: 'Festival Inventar',
   topbar_item_count: '{count} Artikel',
-  topbar_seed_button: 'Beispiel',
+  modal_seed_title: 'Beispieldaten laden?',
+  modal_seed_message: 'Alle aktuellen Daten werden gelöscht und durch Beispieldaten ersetzt. Dies kann nicht rückgängig gemacht werden. Fortfahren?',
+  modal_seed_confirm: 'Ja, Beispieldaten laden',
   topbar_export_button: 'Export',
   topbar_import_button: 'Import',
   topbar_excel_button: 'Excel',
@@ -263,4 +267,14 @@ export const de: Record<string, string> = {
   badge_out_of_stock: 'Nicht auf Lager',
   badge_low_stock: 'Wenig Lager',
   badge_in_stock: 'Auf Lager',
+
+  // Stock reduction confirmation
+  stock_reduction_title: 'Bestand reduzieren?',
+  stock_reduction_message: 'Änderung von {oldTotal} auf {newTotal} erzeugt einen Korrektureintrag.',
+  stock_reduction_warning: 'Dies reduziert den verfügbaren Bestand. Fortfahren?',
+  stock_reduction_confirm: 'Ja, Bestand reduzieren',
+
+  // Rental return
+  rental_return_modal_title: 'Leihgegenstand zurücknehmen',
+  rental_return_modal_message: 'Wähle die Bühne, von der "{name}" zurückkommt:',
 }

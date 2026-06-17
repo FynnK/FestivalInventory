@@ -13,7 +13,7 @@ import {
   getNetIssuedToStage, getLedgerWithDetails,
   reverseTransaction,
   exportData, importData, seedSampleData, clearDatabase,
-  getUsers, getCrews, computeBurnRate,
+  getUsers, getCrews, computeBurnRate, getLastIssueTimestamp,
 } from './db'
 import type { Item, Stage, EnrichedLedgerEntry, ItemFormData } from './db'
 import { useScanner } from './hooks/useScanner'
@@ -122,6 +122,9 @@ export default function App() {
   const [checkoutReview, setCheckoutReview] = useState<CheckoutReview | null>(null)
   const [addStockPrompt, setAddStockPrompt] = useState<AddStockPrompt | null>(null)
   const [insufficientStock, setInsufficientStock] = useState<{ shortages: StockShortage[]; checkoutStageId: number } | null>(null)
+  const [rentalReturn, setRentalReturn] = useState<{ item: Item; stages: Stage[] } | null>(null)
+  const [stockReductionConfirm, setStockReductionConfirm] = useState<{ id: number; form: ItemFormData; oldTotal: number; newTotal: number } | null>(null)
+  const [seedConfirm, setSeedConfirm] = useState(false)
 
   const { t } = useI18n()
 
@@ -191,8 +194,17 @@ export default function App() {
     const item = findItemByBarcode(barcode)
     if (importMode) {
       if (item) {
-        updateItem(item.id, { total: item.total + 1 })
-        showToast(t('toast_added_1_to_item', { name: item.name }), 'success')
+        if (item.itemType === 'rental') {
+          const availableStages = stages.filter(s => getNetIssuedToStage(item.id, s.id) > 0)
+          if (availableStages.length > 0) {
+            setRentalReturn({ item, stages: availableStages })
+          } else {
+            showToast(t('toast_no_items_at_stage'), 'error')
+          }
+        } else {
+          updateItem(item.id, { total: item.total + 1 })
+          showToast(t('toast_added_1_to_item', { name: item.name }), 'success')
+        }
         refresh()
       } else {
         setEditItem({ barcode, name: '', description: '', category: 'General', itemType: 'consumable', total: 1, unitQuantity: 1, unitType: 'pcs', minStockThreshold: 10 })
@@ -201,7 +213,7 @@ export default function App() {
     }
     if (!item) { setUnknownBarcode(barcode); return }
     tryAddToCart(item)
-  }, [importMode, tryAddToCart, showToast, refresh, t])
+  }, [importMode, tryAddToCart, showToast, refresh, t, stages, getNetIssuedToStage])
 
   useScanner(handleScan, true)
 
@@ -252,6 +264,23 @@ export default function App() {
   }
 
   const handleCancelAddStock = () => { setAddStockPrompt(null) }
+
+  const handleRentalReturn = (stageId: number) => {
+    if (!rentalReturn) return
+    const ok = returnItem(rentalReturn.item.id, stageId, 1)
+    if (ok) showToast(t('toast_returned_qty_item', { qty: 1, name: rentalReturn.item.name }), 'success')
+    else showToast(t('toast_return_failed'), 'error')
+    setRentalReturn(null)
+    refresh()
+  }
+
+  const handleConfirmStockReduction = () => {
+    if (!stockReductionConfirm) return
+    updateItem(stockReductionConfirm.id, stockReductionConfirm.form as Partial<Item>)
+    showToast(t('toast_item_updated'), 'success')
+    setStockReductionConfirm(null)
+    refresh()
+  }
 
   const handleRemoveFromCart = (itemId: number) => {
     setCart(prev => prev.filter(c => c.item.id !== itemId))
@@ -319,6 +348,11 @@ export default function App() {
 
   const handleSaveItem = (id: number | null | undefined, form: ItemFormData) => {
     if (id) {
+      const existing = getItemById(id)
+      if (existing && form.total < existing.total) {
+        setStockReductionConfirm({ id, form, oldTotal: existing.total, newTotal: form.total })
+        return
+      }
       updateItem(id, form as Partial<Item>)
       showToast(t('toast_item_updated'), 'success')
     } else {
@@ -413,6 +447,7 @@ export default function App() {
   }
 
   const handleSeed = () => { seedSampleData(); showToast(t('toast_sample_data_loaded'), 'success'); refresh() }
+  const handleConfirmSeed = () => { setSeedConfirm(false); handleSeed() }
 
   const [clearDbConfirm, setClearDbConfirm] = useState(false)
   const handleClearDb = async () => { await clearDatabase(); setClearDbConfirm(false); refresh(); showToast(t('toast_database_cleared'), 'success') }
@@ -429,6 +464,14 @@ export default function App() {
       return acc
     }, {}),
   }))
+
+  const stageDurations: Record<number, Record<number, number | null>> = {}
+  for (const item of items) {
+    stageDurations[item.id] = {}
+    for (const stage of stages) {
+      stageDurations[item.id][stage.id] = getLastIssueTimestamp(item.id, stage.id)
+    }
+  }
 
   const activeStage = stages.find(s => s.id === activeStageId)
 
@@ -453,7 +496,6 @@ export default function App() {
         onExportJson={handleExportJson}
         onImportJson={handleImportJson}
         onExportExcel={handleExportExcel}
-        onSeed={handleSeed}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(d => !d)}
       />
@@ -481,7 +523,6 @@ export default function App() {
       {view === 'inventory' && (
         <div className="flex-1 flex gap-0 overflow-hidden">
           <aside className="w-72 flex-shrink-0 flex flex-col gap-3 p-3 overflow-y-auto border-r border-border bg-card/50">
-            <CrewSelector stages={stages} activeStageId={activeStageId} onSelect={setActiveStageId} onAdd={handleAddStage} onDelete={handleDeleteStage} />
             <ScannerWidget onScan={handleScan} />
             <div className="bg-card border border-border rounded-lg p-3">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t('sidebar_scan_barcode_heading')}</h3>
@@ -503,9 +544,10 @@ export default function App() {
               <FileSpreadsheet size={16} /> {t('sidebar_bulk_import_button')}
             </button>
             <ScannedItemPanel cart={cart} onUpdateQty={handleUpdateCartQty} onAddQty={handleAddQty} onRemove={handleRemoveFromCart} onClearCart={handleClearCart} onCheckout={handleCheckout} stageName={activeStage?.name} />
+            <CrewSelector stages={stages} activeStageId={activeStageId} onSelect={setActiveStageId} onAdd={handleAddStage} onDelete={handleDeleteStage} />
           </aside>
           <main className="flex-1 p-4 overflow-hidden">
-            <InventoryMatrix items={itemsWithBreakdown} stages={stages} activeStageId={activeStageId}
+            <InventoryMatrix items={itemsWithBreakdown} stages={stages} activeStageId={activeStageId} stageDurations={stageDurations}
               onAddToCart={handleAddToCart} onReturn={handleReturn} onEdit={(item) => setEditItem(item)} onDelete={handleDeleteItem}
               onAddItem={() => setEditItem({ barcode: '', name: '', description: '', category: 'General', itemType: 'consumable', total: 1, unitQuantity: 1, unitType: 'pcs', minStockThreshold: 10 })} />
           </main>
@@ -577,7 +619,7 @@ export default function App() {
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('reports_import_heading')}</h3>
               <div className="space-y-2">
                 <button onClick={handleImportJson} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-input text-foreground font-medium text-sm hover:bg-accent transition-colors"><Upload size={16} /> {t('reports_import_json_button')}</button>
-                <button onClick={handleSeed} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-input text-foreground font-medium text-sm hover:bg-accent transition-colors"><Plus size={16} /> {t('reports_load_sample_data_button')}</button>
+                <button onClick={() => setSeedConfirm(true)} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-input text-foreground font-medium text-sm hover:bg-accent transition-colors"><Plus size={16} /> {t('reports_load_sample_data_button')}</button>
               </div>
             </div>
             {burnRateData.length > 0 && (
@@ -655,7 +697,12 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-card border border-border rounded-xl p-6 w-full max-w-lg mx-4 shadow-2xl">
             <h4 className="text-lg font-bold text-foreground mb-1">{t('modal_checkout_review_title')}</h4>
-            <p className="text-sm text-muted-foreground mb-4">{t('modal_checkout_review_message', { stage: stages.find(s => s.id === checkoutReview.stageId)?.name || 'Unknown Stage' })}</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('modal_checkout_review_message_prefix')}{' '}
+              <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs font-semibold">
+                {stages.find(s => s.id === checkoutReview.stageId)?.name || 'Unknown Stage'}
+              </span>
+            </p>
             <div className="max-h-60 overflow-y-auto space-y-1.5 mb-4">
               {checkoutReview.cart.map((entry, idx) => (
                 <div key={idx} className="flex items-center justify-between bg-accent/30 rounded-lg px-3 py-2">
@@ -711,6 +758,41 @@ export default function App() {
         </div>
       )}
 
+      {rentalReturn && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+            <h4 className="text-lg font-bold text-foreground mb-2">{t('rental_return_modal_title')}</h4>
+            <p className="text-sm text-muted-foreground mb-4">{t('rental_return_modal_message', { name: rentalReturn.item.name })}</p>
+            <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
+              {rentalReturn.stages.map(stage => (
+                <button key={stage.id} onClick={() => handleRentalReturn(stage.id)}
+                  className="w-full text-left px-4 py-3 rounded-lg bg-accent hover:bg-accent/80 text-foreground font-semibold text-sm transition-colors">
+                  {stage.name}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => setRentalReturn(null)} className="w-full px-4 py-2.5 rounded-lg border border-input text-foreground hover:bg-accent transition-colors font-medium text-sm">{t('modal_cancel')}</button>
+          </div>
+        </div>
+      )}
+
+      {stockReductionConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-3">
+              <AlertTriangle size={24} className="text-amber-500 shrink-0" />
+              <h4 className="text-lg font-bold text-foreground">{t('stock_reduction_title')}</h4>
+            </div>
+            <p className="text-muted-foreground text-sm mb-1">{t('stock_reduction_message', { oldTotal: stockReductionConfirm.oldTotal, newTotal: stockReductionConfirm.newTotal })}</p>
+            <p className="text-muted-foreground text-sm mb-5">{t('stock_reduction_warning')}</p>
+            <div className="flex gap-3">
+              <button onClick={() => setStockReductionConfirm(null)} className="flex-1 px-4 py-2.5 rounded-lg border border-input text-foreground hover:bg-accent transition-colors font-medium text-sm">{t('modal_cancel')}</button>
+              <button onClick={handleConfirmStockReduction} className="flex-1 px-4 py-2.5 rounded-lg bg-amber-600 text-white font-semibold text-sm hover:bg-amber-700 transition-colors">{t('stock_reduction_confirm')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {insufficientStock && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-card border border-border rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
@@ -740,6 +822,11 @@ export default function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {seedConfirm && (
+        <ConfirmationModal title={t('modal_seed_title')} message={t('modal_seed_message')}
+          confirmLabel={t('modal_seed_confirm')} cancelLabel={t('modal_cancel')} danger onConfirm={handleConfirmSeed} onCancel={() => setSeedConfirm(false)} />
       )}
 
       {clearDbConfirm && (

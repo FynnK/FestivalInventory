@@ -1,4 +1,4 @@
-import { Download, Upload, FileSpreadsheet, Database, Sun, Moon, Cog, Globe } from 'lucide-react'
+import { Download, Upload, FileSpreadsheet, Database, Sun, Moon, Globe } from 'lucide-react'
 import { useI18n, type Locale } from '../i18n'
 
 export default function TopBar({
@@ -6,7 +6,6 @@ export default function TopBar({
   onExportJson,
   onImportJson,
   onExportExcel,
-  onSeed,
   darkMode,
   onToggleDark,
 }: {
@@ -14,7 +13,6 @@ export default function TopBar({
   onExportJson: () => void
   onImportJson: () => void
   onExportExcel: () => void
-  onSeed: () => void
   darkMode: boolean
   onToggleDark: () => void
 }) {
@@ -36,9 +34,6 @@ export default function TopBar({
       </span>
       <div className="flex-1" />
       <div className="flex items-center gap-1.5">
-        <button onClick={onSeed} className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-accent/50 hover:bg-accent rounded-lg transition-colors">
-          <Cog size={14} className="inline mr-1" />{t('topbar_seed_button')}
-        </button>
         <button onClick={onExportJson} className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-accent/50 hover:bg-accent rounded-lg transition-colors">
           <Download size={14} className="inline mr-1" />{t('topbar_export_button')}
         </button>

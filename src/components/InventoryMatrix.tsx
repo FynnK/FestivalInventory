@@ -8,6 +8,7 @@ export default function InventoryMatrix({
   items,
   stages,
   activeStageId,
+  stageDurations,
   onAddToCart,
   onReturn,
   onEdit,
@@ -17,6 +18,7 @@ export default function InventoryMatrix({
   items: Item[]
   stages: Stage[]
   activeStageId: number | null
+  stageDurations?: Record<number, Record<number, number | null>>
   onAddToCart: (item: Item) => void
   onReturn: (item: Item) => void
   onEdit: (item: Item) => void
@@ -26,6 +28,16 @@ export default function InventoryMatrix({
   const { t } = useI18n()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
+  const [unreturnedOnly, setUnreturnedOnly] = useState(false)
+
+  function formatDuration(ts: number | null | undefined): string {
+    if (!ts) return ''
+    const diff = Date.now() - ts
+    if (diff < 60000) return 'just now'
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m`
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`
+    return `${Math.floor(diff / 86400000)}d`
+  }
 
   const categories = useMemo(() => {
     const set = new Set(items.map(i => i.category).filter(Boolean))
@@ -45,8 +57,11 @@ export default function InventoryMatrix({
     if (categoryFilter !== 'all') {
       result = result.filter(i => i.category === categoryFilter)
     }
+    if (unreturnedOnly) {
+      result = result.filter(i => i.itemType === 'rental' && (i.netConsumed ?? 0) > 0)
+    }
     return result
-  }, [items, search, categoryFilter])
+  }, [items, search, categoryFilter, unreturnedOnly])
 
   return (
     <div className="flex flex-col h-full">
@@ -73,6 +88,11 @@ export default function InventoryMatrix({
             ))}
           </select>
         )}
+        <label className="flex items-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer select-none transition-colors">
+          <input type="checkbox" checked={unreturnedOnly} onChange={e => setUnreturnedOnly(e.target.checked)}
+            className="rounded border-input" />
+          {t('inventory_filter_unreturned')}
+        </label>
         <button onClick={onAddItem} className="flex items-center gap-1.5 px-3 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity">
           <Plus size={16} /> {t('inventory_add_item_button')}
         </button>
@@ -133,6 +153,11 @@ export default function InventoryMatrix({
                         <span className={`font-semibold ${netAtStage > 0 ? 'text-primary' : 'text-muted-foreground/40'}`}>
                           {netAtStage > 0 ? netAtStage : '—'}
                         </span>
+                        {netAtStage > 0 && item.itemType === 'rental' && stageDurations?.[item.id]?.[activeStageId] && (
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            {formatDuration(stageDurations[item.id][activeStageId])}
+                          </div>
+                        )}
                       </td>
                     )}
                     <td className="py-2.5 px-2 text-right whitespace-nowrap">

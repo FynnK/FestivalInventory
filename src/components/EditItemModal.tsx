@@ -22,6 +22,7 @@ export default function EditItemModal({
     serialNumber: '', uniqueId: '', owner: '',
   })
   const [error, setError] = useState('')
+  const [isNewCategory, setIsNewCategory] = useState(false)
 
   useEffect(() => {
     if (item) {
@@ -49,10 +50,6 @@ export default function EditItemModal({
     }
     if (form.total < 0) {
       setError(t('edit_error_total_negative'))
-      return
-    }
-    if (item?.id && form.total < (item.remaining ?? 0)) {
-      setError(t('edit_error_total_below_issued', { remaining: item.remaining ?? 0 }))
       return
     }
     setError('')
@@ -94,9 +91,25 @@ export default function EditItemModal({
           </div>
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">{t('edit_field_category_label')}</label>
-            <input type="text" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
-              className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder={t('edit_field_category_placeholder')} list="category-list" />
-            <datalist id="category-list">{KNOWN_CATEGORIES.map(c => <option key={c} value={c} />)}</datalist>
+            {isNewCategory ? (
+              <div className="flex gap-2">
+                <input type="text" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
+                  className="flex-1 bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder={t('edit_field_category_placeholder')} autoFocus />
+                <button onClick={() => { setIsNewCategory(false); setForm({ ...form, category: 'General' }) }}
+                  className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">{t('modal_cancel')}</button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <select value={form.category} onChange={e => {
+                  if (e.target.value === '__new__') { setIsNewCategory(true); setForm({ ...form, category: '' }) }
+                  else setForm({ ...form, category: e.target.value })
+                }}
+                  className="flex-1 bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                  {KNOWN_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  <option value="__new__">+ {t('edit_field_category_new')}</option>
+                </select>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">{t('edit_field_description_label')}</label>

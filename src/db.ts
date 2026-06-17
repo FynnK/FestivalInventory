@@ -1,4 +1,11 @@
 import Dexie, { Table } from 'dexie';
+import {
+  computeRemaining as pureRemaining,
+  computeNetConsumed as pureNetConsumed,
+  computeNetIssuedToStage as pureNetIssuedToStage,
+  computeBurnRate as pureBurnRate,
+  getLastIssueTimestamp as pureLastIssueTimestamp,
+} from './inventory-math'
 
 export interface User {
   id: number
@@ -231,7 +238,7 @@ export function deleteStage(id: number): void {
 
 export function issueItem(itemId: number, stageId: number, qty: number, note = '', userId?: number, crewId?: number): boolean {
   const item = items.find(i => i.id === itemId)
-  if (!item || !stageId) return false
+  if (!item || !stageId || !stages.find(s => s.id === stageId)) return false
   if (computeRemaining(itemId) < qty) return false
   ledger.push({
     id: nextLedgerId++, itemId, stageId, qtyIssued: qty, qtyReturned: 0,
@@ -299,30 +306,25 @@ export function reverseTransaction(entryId: number, note = ''): boolean {
 }
 
 export function getNetIssuedToStage(itemId: number, stageId: number): number {
-  const entries = ledger.filter(l => l.itemId === itemId && l.stageId === stageId)
-  return entries.reduce((s, e) => s + e.qtyIssued, 0) - entries.reduce((s, e) => s + e.qtyReturned, 0)
+  return pureNetIssuedToStage(ledger.filter(l => l.itemId === itemId && l.stageId === stageId))
 }
 
 function computeRemaining(itemId: number): number {
   const item = items.find(i => i.id === itemId)
   if (!item) return 0
-  const totalIssued = ledger.filter(l => l.itemId === itemId).reduce((s, e) => s + e.qtyIssued, 0)
-  const totalReturned = ledger.filter(l => l.itemId === itemId).reduce((s, e) => s + e.qtyReturned, 0)
-  return item.total - totalIssued + totalReturned
+  return pureRemaining(item, ledger.filter(l => l.itemId === itemId))
 }
 
 function computeNetConsumed(itemId: number): number {
-  const totalIssued = ledger.filter(l => l.itemId === itemId).reduce((s, e) => s + e.qtyIssued, 0)
-  const totalReturned = ledger.filter(l => l.itemId === itemId).reduce((s, e) => s + e.qtyReturned, 0)
-  return totalIssued - totalReturned
+  return pureNetConsumed(ledger.filter(l => l.itemId === itemId))
 }
 
 export function computeBurnRate(itemId: number, days = 7): number {
-  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
-  const recentIssued = ledger
-    .filter(l => l.itemId === itemId && l.timestamp >= cutoff)
-    .reduce((s, e) => s + e.qtyIssued, 0)
-  return recentIssued / days
+  return pureBurnRate(ledger.filter(l => l.itemId === itemId), days)
+}
+
+export function getLastIssueTimestamp(itemId: number, stageId: number): number | null {
+  return pureLastIssueTimestamp(ledger.filter(l => l.itemId === itemId && l.stageId === stageId))
 }
 
 export function getMissingAssetsPerStage(): { stageId: number; stageName: string; missing: { item: Item; expected: number; actual: number }[] }[] {

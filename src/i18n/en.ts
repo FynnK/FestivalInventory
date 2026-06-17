@@ -14,7 +14,7 @@ export const en: Record<string, string> = {
   sidebar_import_mode_label: 'Import Mode',
   sidebar_import_mode_on: 'ON',
   sidebar_import_mode_off: 'OFF',
-  sidebar_import_mode_hint: 'Scanning adds items to stock. Unknown barcodes open the add-item form.',
+  sidebar_import_mode_hint: 'Scanning adds consumables to stock. Rental items trigger return from stage.',
   sidebar_bulk_import_button: 'Bulk Import',
 
   // Toast messages
@@ -94,7 +94,7 @@ export const en: Record<string, string> = {
 
   // Modal - checkout review
   modal_checkout_review_title: 'Checkout Review',
-  modal_checkout_review_message: 'Checking out to {stage}',
+  modal_checkout_review_message_prefix: 'Checking out to',
   modal_checkout_total_items: 'Total items:',
   modal_confirm_checkout: 'Confirm Checkout',
 
@@ -185,6 +185,7 @@ export const en: Record<string, string> = {
   inventory_add_item_button: 'Add Item',
   inventory_no_match_filters: 'No items match your filters',
   inventory_no_items: 'No items in inventory',
+  inventory_filter_unreturned: 'Unreturned Rentals',
   inventory_table_header_barcode: 'Barcode',
   inventory_table_header_name: 'Name',
   inventory_table_header_category: 'Category',
@@ -208,6 +209,7 @@ export const en: Record<string, string> = {
   edit_field_name_placeholder: 'Item name',
   edit_field_category_label: 'Category',
   edit_field_category_placeholder: 'e.g. Hardware, Cables, Consumables...',
+  edit_field_category_new: 'New Category',
   edit_field_description_label: 'Description',
   edit_field_description_placeholder: 'Optional description',
   edit_field_serial_number_label: 'Serial Number',
@@ -244,7 +246,9 @@ export const en: Record<string, string> = {
   // Top bar
   topbar_app_title: 'Festival Inventory',
   topbar_item_count: '{count} items',
-  topbar_seed_button: 'Seed',
+  modal_seed_title: 'Load Sample Data?',
+  modal_seed_message: 'This will delete all current data and replace it with sample data. This cannot be undone. Are you sure?',
+  modal_seed_confirm: 'Yes, Load Sample Data',
   topbar_export_button: 'Export',
   topbar_import_button: 'Import',
   topbar_excel_button: 'Excel',
@@ -263,4 +267,14 @@ export const en: Record<string, string> = {
   badge_out_of_stock: 'Out of Stock',
   badge_low_stock: 'Low Stock',
   badge_in_stock: 'In Stock',
+
+  // Stock reduction confirmation
+  stock_reduction_title: 'Reduce Stock?',
+  stock_reduction_message: 'Changing total from {oldTotal} to {newTotal} will create a stock correction entry.',
+  stock_reduction_warning: 'This reduces the available inventory. Are you sure?',
+  stock_reduction_confirm: 'Yes, Reduce Stock',
+
+  // Rental return
+  rental_return_modal_title: 'Return Rental Item',
+  rental_return_modal_message: 'Select the stage returning "{name}":',
 }
