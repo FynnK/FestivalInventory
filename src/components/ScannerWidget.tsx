@@ -8,6 +8,7 @@ export default function ScannerWidget({ onScan }: { onScan: (barcode: string) =>
   const [isOpen, setIsOpen] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
+  const [isPermissionDenied, setIsPermissionDenied] = useState(false)
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const containerId = 'qr-reader-widget'
@@ -70,6 +71,7 @@ export default function ScannerWidget({ onScan }: { onScan: (barcode: string) =>
       const msg = err?.message || String(err) || t('scanner_error_start_failed')
       if (msg.includes('Permission') || msg.includes('permission') || msg.includes('NotAllowed')) {
         setCameraError('Camera permission denied. Please allow camera access in your browser settings.')
+        setIsPermissionDenied(true)
       } else if (msg.includes('NotFound') || msg.includes('not found') || msg.includes('No cameras')) {
         setCameraError('No camera found on this device.')
       } else {
@@ -78,6 +80,24 @@ export default function ScannerWidget({ onScan }: { onScan: (barcode: string) =>
       setIsScanning(false)
     }
   }, [onScan, t])
+
+  const requestPermission = useCallback(async () => {
+    setIsPermissionDenied(false)
+    setCameraError(null)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      stream.getTracks().forEach(t => t.stop())
+      startScanner()
+    } catch (err: any) {
+      const msg = err?.message || String(err)
+      if (msg.includes('Permission') || msg.includes('permission') || msg.includes('NotAllowed')) {
+        setIsPermissionDenied(true)
+        setCameraError('Camera permission denied. Please allow camera access in your browser settings.')
+      } else {
+        setCameraError(msg)
+      }
+    }
+  }, [startScanner])
 
   const toggle = () => {
     if (isOpen) {
@@ -107,8 +127,11 @@ export default function ScannerWidget({ onScan }: { onScan: (barcode: string) =>
           <div className="mt-3">
             <div ref={containerRef} id={containerId} className="w-full aspect-square bg-background rounded-lg overflow-hidden" />
             {cameraError && <p className="text-xs text-destructive mt-2">{cameraError}</p>}
-            {!isScanning && !cameraError && (
+            {!isScanning && !cameraError && !isPermissionDenied && (
               <button onClick={startScanner} className="w-full mt-2 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">{t('scanner_start_camera_button')}</button>
+            )}
+            {isPermissionDenied && (
+              <button onClick={requestPermission} className="w-full mt-2 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">{t('scanner_request_permission_button')}</button>
             )}
             {isScanning && (
               <button onClick={stopScanner} className="w-full mt-2 px-3 py-1.5 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity"><CameraOff size={14} className="inline mr-1" /> {t('scanner_stop_button')}</button>
