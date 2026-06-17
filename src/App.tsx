@@ -4,6 +4,7 @@ import {
   Download, Upload, Tent, Warehouse,
   BarChart3, History, Trash2, FileSpreadsheet,
   Smartphone, Maximize2, Minimize2, Settings, Database,
+  Sun, Moon, Globe,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import {
@@ -134,7 +135,7 @@ export default function App() {
 
   const peerSync = usePeerSync()
 
-  const { t } = useI18n()
+  const { t, locale, setLocale } = useI18n()
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const barcodeRef = useRef<HTMLInputElement>(null)
@@ -565,14 +566,7 @@ export default function App() {
         </div>
       ) : (
         <>
-      <TopBar
-        itemCount={items.length}
-        onExportJson={handleExportJson}
-        onImportJson={handleImportJson}
-        onExportExcel={handleExportExcel}
-        darkMode={darkMode}
-        onToggleDark={() => setDarkMode(d => !d)}
-      />
+      <TopBar itemCount={items.length} />
 
       <div className="flex flex-wrap items-center gap-1 px-4 py-1.5 border-b border-border bg-card">
         {[
@@ -728,6 +722,27 @@ export default function App() {
                 onStart={handleStartRemoteScanner}
                 onStop={peerSync.stopHosting}
               />
+            </div>
+            <div className="bg-card border border-border rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('settings_data_heading')}</h3>
+              <div className="space-y-2">
+                <button onClick={handleExportExcel} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity"><Download size={16} /> {t('reports_export_excel_button')}</button>
+                <button onClick={handleExportJson} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-input text-foreground font-medium text-sm hover:bg-accent transition-colors"><Download size={16} /> {t('topbar_export_button')}</button>
+                <button onClick={handleImportJson} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-input text-foreground font-medium text-sm hover:bg-accent transition-colors"><Upload size={16} /> {t('topbar_import_button')}</button>
+              </div>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('settings_appearance_heading')}</h3>
+              <div className="space-y-2">
+                <button onClick={() => setDarkMode(d => !d)} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-input text-foreground font-medium text-sm hover:bg-accent transition-colors">
+                  {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+                  {darkMode ? t('settings_light_mode') : t('settings_dark_mode')}
+                </button>
+                <button onClick={() => setLocale(locale === 'en' ? 'de' : 'en')} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-input text-foreground font-medium text-sm hover:bg-accent transition-colors">
+                  <Globe size={16} />
+                  {locale === 'en' ? 'DE' : 'EN'}
+                </button>
+              </div>
             </div>
             <div className="bg-card border border-destructive/30 rounded-xl p-5 md:col-span-2">
               <h3 className="text-sm font-semibold text-destructive uppercase tracking-wider mb-3">{t('reports_danger_zone_heading')}</h3>
