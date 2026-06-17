@@ -31,6 +31,7 @@ export default function ScannerWidget({ onScan, importMode }: { onScan: (barcode
   const containerRef = useRef<HTMLDivElement>(null)
   const containerId = 'qr-reader-widget'
   const pendingRef = useRef(false)
+  const lastScanRef = useRef(0)
 
   useEffect(() => {
     return () => { stopScanner() }
@@ -59,6 +60,9 @@ export default function ScannerWidget({ onScan, importMode }: { onScan: (barcode
 
   const onDecode = useCallback(async (decodedText: string) => {
     if (pendingRef.current) return
+    const now = Date.now()
+    if (!importMode && now - lastScanRef.current < 500) return
+    lastScanRef.current = now
     playBeep()
     try { navigator.vibrate(100) } catch {}
     flashOnce()

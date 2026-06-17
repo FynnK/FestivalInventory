@@ -517,16 +517,33 @@ export default function App() {
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {remoteMode && (
-        <div className="bg-green-700 text-white flex items-center justify-between px-4 py-1.5 text-xs font-medium">
+        <div className={`flex items-center justify-between px-4 py-1.5 text-xs font-medium ${
+          peerSync.state.status === 'error' ? 'bg-red-700 text-white' :
+          peerSync.state.status === 'connected' ? 'bg-green-700 text-white' :
+          'bg-yellow-700 text-white'
+        }`}>
           <span className="flex items-center gap-1.5">
             <Smartphone size={12} />
-            {peerSync.state.status === 'connected' ? t('remote_scanner_phone_bar') : t('remote_scanner_connecting')}
+            {peerSync.state.status === 'connected' ? t('remote_scanner_phone_bar') :
+             peerSync.state.status === 'error' ? (peerSync.state.error || t('remote_scanner_connection_error', { error: '' })) :
+             t('remote_scanner_connecting')}
           </span>
-          <button onClick={() => setRemoteView(remoteView === 'scanner' ? 'full' : 'scanner')}
-            className="flex items-center gap-1 px-2 py-0.5 rounded bg-green-600 hover:bg-green-500 transition-colors">
-            {remoteView === 'scanner' ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
-            {remoteView === 'scanner' ? t('remote_scanner_view_toggle_full') : t('remote_scanner_view_toggle_scanner')}
-          </button>
+          <div className="flex items-center gap-2">
+            {peerSync.state.status === 'error' && remoteMode && (
+              <button onClick={() => peerSync.connectToHost(remoteMode!)}
+                className="px-2 py-0.5 rounded bg-red-600 hover:bg-red-500 transition-colors font-semibold">
+                {t('remote_scanner_retry')}
+              </button>
+            )}
+            <button onClick={() => setRemoteView(remoteView === 'scanner' ? 'full' : 'scanner')}
+              className="flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
+                peerSync.state.status === 'error' ? 'bg-red-600 hover:bg-red-500' :
+                'bg-green-600 hover:bg-green-500'
+              }">
+              {remoteView === 'scanner' ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
+              {remoteView === 'scanner' ? t('remote_scanner_view_toggle_full') : t('remote_scanner_view_toggle_scanner')}
+            </button>
+          </div>
         </div>
       )}
       {isOffline && <OfflineBanner />}
@@ -565,7 +582,7 @@ export default function App() {
         </div>
       ) : (
         <>
-      <TopBar itemCount={items.length} view={view} onViewChange={setView} />
+      <TopBar itemCount={items.length} view={view} onViewChange={(v) => setView(v as View)} />
 
       {view === 'inventory' && (
         <div className="flex-1 flex gap-0 overflow-hidden">

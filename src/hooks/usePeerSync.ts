@@ -72,13 +72,28 @@ export function usePeerSync() {
     const conn = peer.connect(roomId, { reliable: true })
     connRef.current = conn
 
-    conn.on('open', () => setState({ status: 'connected', peerId: roomId, error: null }))
-    conn.on('error', (err) => setState({ status: 'error', peerId: roomId, error: err.message }))
-    conn.on('close', () => {
+    const timeout = setTimeout(() => {
+      setState({ status: 'error', peerId: roomId, error: 'Connection timed out. Make sure the desktop is hosting a remote scanner.' })
+    }, 15000)
+
+    const onOpen = () => {
+      clearTimeout(timeout)
+      setState({ status: 'connected', peerId: roomId, error: null })
+    }
+    const onError = (err: any) => {
+      clearTimeout(timeout)
+      setState({ status: 'error', peerId: roomId, error: err.message })
+    }
+    const onClose = () => {
+      clearTimeout(timeout)
       connRef.current = null
       setState({ status: 'idle', peerId: null, error: null })
-    })
-    peer.on('error', (err) => setState({ status: 'error', peerId: roomId, error: err.message }))
+    }
+
+    conn.on('open', onOpen)
+    conn.on('error', onError)
+    conn.on('close', onClose)
+    peer.on('error', onError)
   }, [cleanup])
 
   const disconnect = useCallback(() => {

@@ -301,4 +301,5 @@ export const de: Record<string, string> = {
   remote_scanner_recent_scans: 'Letzte Scans',
   remote_scanner_no_scans: 'Noch keine Scans.',
   remote_scanner_phone_bar: 'Als Remote-Scanner verbunden',
+  remote_scanner_retry: 'Wiederholen',
 }
