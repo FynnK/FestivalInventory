@@ -60,6 +60,7 @@ export default function ScannerWidget({ onScan, importMode }: { onScan: (barcode
   const onDecode = useCallback(async (decodedText: string) => {
     if (pendingRef.current) return
     playBeep()
+    try { navigator.vibrate(100) } catch {}
     flashOnce()
     if (importMode) {
       pendingRef.current = true
