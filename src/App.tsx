@@ -557,7 +557,7 @@ export default function App() {
       {remoteMode && remoteView === 'scanner' ? (
         <div className="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
           <div className="max-w-md mx-auto w-full">
-            <ScannerWidget onScan={handleRemoteScan} importMode={importMode} />
+            <ScannerWidget onScan={handleRemoteScan} importMode={importMode} startOpen />
           </div>
           <div className="max-w-md mx-auto w-full bg-card border border-border rounded-lg p-3">
             <button onClick={() => setImportMode(!importMode)}

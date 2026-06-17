@@ -19,9 +19,9 @@ function playBeep() {
   } catch {}
 }
 
-export default function ScannerWidget({ onScan, importMode }: { onScan: (barcode: string) => void; importMode?: boolean }) {
+export default function ScannerWidget({ onScan, importMode, startOpen }: { onScan: (barcode: string) => void; importMode?: boolean; startOpen?: boolean }) {
   const { t } = useI18n()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(startOpen || false)
   const [isScanning, setIsScanning] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
   const [isPermissionDenied, setIsPermissionDenied] = useState(false)

@@ -39,17 +39,29 @@ export function usePeerSync() {
     const ws = new WebSocket(`ws://127.0.0.1:${port}?room=${roomId}&role=desktop`)
     wsRef.current = ws
 
-    ws.onopen = () => setState({ status: 'connected', roomId, relayIp: ip, error: null })
-    ws.onerror = () => setState({ status: 'error', roomId, relayIp: ip, error: 'WebSocket connection failed.' })
+    ws.onopen = () => {
+      console.log('[Desktop] WebSocket connected to relay, room:', roomId)
+      setState({ status: 'connected', roomId, relayIp: ip, error: null })
+    }
+    ws.onerror = () => {
+      console.error('[Desktop] WebSocket connection error')
+      setState({ status: 'error', roomId, relayIp: ip, error: 'WebSocket connection failed.' })
+    }
     ws.onclose = () => {
       wsRef.current = null
       setState({ status: 'idle', roomId: null, relayIp: null, error: null })
     }
     ws.onmessage = (event) => {
       try {
-        const msg = JSON.parse(event.data)
-        if (msg.type === 'BARCODE') onBarcodeRef.current?.(msg.payload)
-      } catch {}
+        const text = typeof event.data === 'string' ? event.data : new TextDecoder().decode(event.data)
+        const msg = JSON.parse(text)
+        if (msg.type === 'BARCODE') {
+          console.log('[Desktop] received barcode via WebSocket:', msg.payload)
+          onBarcodeRef.current?.(msg.payload)
+        }
+      } catch (e) {
+        console.error('[Desktop] failed to process remote barcode:', e)
+      }
     }
   }, [cleanup])
 
@@ -62,6 +74,7 @@ export function usePeerSync() {
     cleanup()
     let timedOut = false
     setState({ status: 'connecting', roomId, relayIp: ip, error: null })
+    console.log('[Phone] connecting to relay at', ip, port, 'room:', roomId)
 
     const ws = new WebSocket(`ws://${ip}:${port}?room=${roomId}&role=phone`)
     wsRef.current = ws
@@ -73,10 +86,12 @@ export function usePeerSync() {
 
     ws.onopen = () => {
       clearTimeout(timeout)
+      console.log('[Phone] WebSocket connected to relay')
       setState({ status: 'connected', roomId, relayIp: ip, error: null })
     }
     ws.onerror = () => {
       clearTimeout(timeout)
+      console.error('[Phone] WebSocket connection error')
       setState({ status: 'error', roomId, relayIp: ip, error: 'Connection failed.' })
     }
     ws.onclose = () => {
@@ -95,7 +110,10 @@ export function usePeerSync() {
 
   const sendBarcode = useCallback((barcode: string) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
+      console.log('[Phone] sending barcode:', barcode)
       wsRef.current.send(JSON.stringify({ type: 'BARCODE', payload: barcode }))
+    } else {
+      console.warn('[Phone] cannot send barcode — WebSocket not open, state:', wsRef.current?.readyState)
     }
   }, [])
 

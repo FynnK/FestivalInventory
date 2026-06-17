@@ -27,13 +27,20 @@ wss.on('connection', (ws, req) => {
   if (!rooms.has(roomId)) rooms.set(roomId, {})
   const room = rooms.get(roomId)
   room[role] = ws
+  console.log(`[Relay] ${role} joined room ${roomId}`)
 
   ws.on('message', (data) => {
-    const msg = JSON.parse(data.toString())
+    const text = data.toString()
+    const msg = JSON.parse(text)
+    console.log(`[Relay] message from ${role} in room ${roomId}:`, msg.type)
     if (role === 'phone' && room.desktop) {
-      room.desktop.send(data)
+      console.log('[Relay] forwarding phone → desktop')
+      room.desktop.send(text)
     } else if (role === 'desktop' && room.phone) {
-      room.phone.send(data)
+      console.log('[Relay] forwarding desktop → phone')
+      room.phone.send(text)
+    } else {
+      console.log('[Relay] no peer to forward to (other role not connected)')
     }
   })
 
