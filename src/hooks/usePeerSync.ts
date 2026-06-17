@@ -22,12 +22,30 @@ export function usePeerSync() {
   const [state, setState] = useState<PeerState>({ status: 'idle', roomId: null, relayIp: null, error: null })
   const wsRef = useRef<WebSocket | null>(null)
   const onBarcodeRef = useRef<((barcode: string) => void) | null>(null)
+  const onMessageRef = useRef<((msg: { type: string; payload: any }) => void) | null>(null)
 
   const cleanup = useCallback(() => {
     if (wsRef.current) {
       wsRef.current.close()
       wsRef.current = null
     }
+  }, [])
+
+  const setOnMessage = useCallback((handler: ((msg: { type: string; payload: any }) => void) | null) => {
+    onMessageRef.current = handler
+  }, [])
+
+  const send = useCallback((type: string, payload: any) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type, payload }))
+    }
+  }, [])
+
+  const readEventData = useCallback((event: MessageEvent): string => {
+    if (typeof event.data === 'string') return event.data
+    if (event.data instanceof ArrayBuffer) return new TextDecoder().decode(event.data)
+    if (event.data instanceof Blob) return '' // should not happen with text frames
+    return ''
   }, [])
 
   const startHosting = useCallback((ip: string, port: string, onBarcode: (barcode: string) => void) => {
@@ -53,17 +71,19 @@ export function usePeerSync() {
     }
     ws.onmessage = (event) => {
       try {
-        const text = typeof event.data === 'string' ? event.data : new TextDecoder().decode(event.data)
+        const text = readEventData(event)
         const msg = JSON.parse(text)
         if (msg.type === 'BARCODE') {
           console.log('[Desktop] received barcode via WebSocket:', msg.payload)
           onBarcodeRef.current?.(msg.payload)
+        } else {
+          onMessageRef.current?.(msg)
         }
       } catch (e) {
-        console.error('[Desktop] failed to process remote barcode:', e)
+        console.error('[Desktop] failed to process remote message:', e)
       }
     }
-  }, [cleanup])
+  }, [cleanup, readEventData])
 
   const stopHosting = useCallback(() => {
     cleanup()
@@ -101,7 +121,16 @@ export function usePeerSync() {
         setState({ status: 'idle', roomId: null, relayIp: null, error: null })
       }
     }
-  }, [cleanup])
+    ws.onmessage = (event) => {
+      try {
+        const text = readEventData(event)
+        const msg = JSON.parse(text)
+        onMessageRef.current?.(msg)
+      } catch (e) {
+        console.error('[Phone] failed to process message:', e)
+      }
+    }
+  }, [cleanup, readEventData])
 
   const disconnect = useCallback(() => {
     cleanup()
@@ -119,5 +148,5 @@ export function usePeerSync() {
 
   useEffect(() => cleanup, [cleanup])
 
-  return { state, startHosting, stopHosting, connectToHost, disconnect, sendBarcode, generateRoomId }
+  return { state, startHosting, stopHosting, connectToHost, disconnect, sendBarcode, send, setOnMessage, generateRoomId }
 }

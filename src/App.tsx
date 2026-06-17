@@ -139,6 +139,8 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const barcodeRef = useRef<HTMLInputElement>(null)
   const remoteRoomIdRef = useRef<string | null>(null)
+  const onMessageCbRef = useRef<(msg: { type: string; payload: any }) => void>(() => {})
+  const sendRef = useRef(peerSync.send)
 
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
     setToast({ show: true, message, type })
@@ -173,6 +175,28 @@ export default function App() {
       peerSync.connectToHost(ip, port || '3001', roomQuery)
     }
   }, [])
+
+  useEffect(() => {
+    peerSync.setOnMessage((msg) => onMessageCbRef.current(msg))
+  }, [peerSync])
+
+  onMessageCbRef.current = (msg) => {
+    if (msg.type === 'SYNC_IMPORT_MODE') {
+      setImportMode(msg.payload)
+    } else if (msg.type === 'UNKNOWN_BARCODE') {
+      setUnknownBarcode(msg.payload)
+    } else if (msg.type === 'IMPORT_ITEM') {
+      setImportMode(true)
+      setEditItem({ barcode: msg.payload, name: '', description: '', category: 'General', itemType: 'consumable', total: 1, unitQuantity: 1, unitType: 'pcs', minStockThreshold: 10 })
+      setUnknownBarcode(null)
+    }
+  }
+
+  useEffect(() => {
+    if (peerSync.state.status === 'connected' && !remoteMode) {
+      peerSync.send('SYNC_IMPORT_MODE', importMode)
+    }
+  }, [importMode, peerSync.state.status, remoteMode])
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode)
@@ -232,7 +256,11 @@ export default function App() {
       }
       return
     }
-    if (!item) { setUnknownBarcode(barcode); return }
+    if (!item) {
+      setUnknownBarcode(barcode)
+      sendRef.current('UNKNOWN_BARCODE', barcode)
+      return
+    }
     tryAddToCart(item)
   }, [importMode, tryAddToCart, showToast, refresh, t, stages, getNetIssuedToStage])
 
@@ -862,7 +890,15 @@ export default function App() {
             <p className="text-muted-foreground text-sm mb-1">{t('modal_unknown_barcode_message', { barcode: unknownBarcode })}</p>
             <p className="text-muted-foreground text-sm mb-5">{t('modal_unknown_barcode_suggestion')}</p>
             <div className="flex gap-3">
-              <button onClick={() => { setImportMode(true); setEditItem({ barcode: unknownBarcode, name: '', description: '', category: 'General', itemType: 'consumable', total: 1, unitQuantity: 1, unitType: 'pcs', minStockThreshold: 10 }); setUnknownBarcode(null) }}
+              <button onClick={() => {
+                if (remoteMode) {
+                  sendRef.current('IMPORT_ITEM', unknownBarcode)
+                } else {
+                  setImportMode(true)
+                  setEditItem({ barcode: unknownBarcode, name: '', description: '', category: 'General', itemType: 'consumable', total: 1, unitQuantity: 1, unitType: 'pcs', minStockThreshold: 10 })
+                }
+                setUnknownBarcode(null)
+              }}
                 className="flex-1 px-4 py-2.5 rounded-lg bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition-colors">{t('modal_import_item_button')}</button>
               <button onClick={() => setUnknownBarcode(null)} className="flex-1 px-4 py-2.5 rounded-lg border border-input text-foreground hover:bg-accent transition-colors font-medium text-sm">{t('modal_abort_button')}</button>
             </div>
