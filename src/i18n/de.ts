@@ -280,4 +280,20 @@ export const de: Record<string, string> = {
   // Rental return
   rental_return_modal_title: 'Leihgegenstand zurücknehmen',
   rental_return_modal_message: 'Wähle die Bühne, von der "{name}" zurückkommt:',
+
+  // Remote scanner
+  remote_scanner_heading: 'Remote-Scanner',
+  remote_scanner_off: 'AUS',
+  remote_scanner_waiting: 'Warte…',
+  remote_scanner_connected: 'Verbunden',
+  remote_scanner_scan_instruction: 'Scanne den QR-Code mit deinem Telefon, um als Remote-Scanner zu verbinden.',
+  remote_scanner_phone_connected: 'Telefon verbunden. Scans vom Telefon erscheinen hier.',
+  remote_scanner_generating: 'Generiere QR-Code…',
+  remote_scanner_connecting: 'Verbinde…',
+  remote_scanner_connection_error: 'Verbindung fehlgeschlagen: {error}',
+  remote_scanner_view_toggle_scanner: 'Scanner-Ansicht',
+  remote_scanner_view_toggle_full: 'Volle Ansicht',
+  remote_scanner_recent_scans: 'Letzte Scans',
+  remote_scanner_no_scans: 'Noch keine Scans.',
+  remote_scanner_phone_bar: 'Als Remote-Scanner verbunden',
 }

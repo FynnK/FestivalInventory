@@ -3,6 +3,7 @@ import {
   ScanLine, Plus, AlertTriangle,
   Download, Upload, Tent, Warehouse,
   BarChart3, History, Trash2, FileSpreadsheet,
+  Smartphone, Maximize2, Minimize2,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import {
@@ -29,6 +30,8 @@ import ReturnQtyModal from './components/ReturnQtyModal'
 import TransactionHistory from './components/TransactionHistory'
 import BulkImportModal from './components/BulkImportModal'
 import { useI18n } from './i18n'
+import { usePeerSync } from './hooks/usePeerSync'
+import RemoteScannerPanel from './components/RemoteScannerPanel'
 import './App.css'
 
 type ToastType = 'success' | 'error' | 'info'
@@ -125,6 +128,11 @@ export default function App() {
   const [rentalReturn, setRentalReturn] = useState<{ item: Item; stages: Stage[] } | null>(null)
   const [stockReductionConfirm, setStockReductionConfirm] = useState<{ id: number; form: ItemFormData; oldTotal: number; newTotal: number } | null>(null)
   const [seedConfirm, setSeedConfirm] = useState(false)
+  const [remoteMode, setRemoteMode] = useState<string | null>(null)
+  const [remoteView, setRemoteView] = useState<'scanner' | 'full'>('scanner')
+  const [recentScans, setRecentScans] = useState<{ barcode: string; time: Date }[]>([])
+
+  const peerSync = usePeerSync()
 
   const { t } = useI18n()
 
@@ -151,6 +159,15 @@ export default function App() {
       setItems(getItems())
       setActiveStageId(saved.length > 0 ? saved[0].id : null)
     })
+  }, [])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const remote = params.get('remote')
+    if (remote) {
+      setRemoteMode(remote)
+      peerSync.connectToHost(remote)
+    }
   }, [])
 
   useEffect(() => {
@@ -216,6 +233,15 @@ export default function App() {
   }, [importMode, tryAddToCart, showToast, refresh, t, stages, getNetIssuedToStage])
 
   useScanner(handleScan, true)
+
+  const handleStartRemoteScanner = useCallback(() => {
+    peerSync.startHosting(handleScan)
+  }, [peerSync, handleScan])
+
+  const handleRemoteScan = useCallback((barcode: string) => {
+    peerSync.sendBarcode(barcode)
+    setRecentScans(prev => [{ barcode, time: new Date() }, ...prev].slice(0, 50))
+  }, [peerSync])
 
   const handleBarcodeSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -490,7 +516,55 @@ export default function App() {
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
+      {remoteMode && (
+        <div className="bg-green-700 text-white flex items-center justify-between px-4 py-1.5 text-xs font-medium">
+          <span className="flex items-center gap-1.5">
+            <Smartphone size={12} />
+            {peerSync.state.status === 'connected' ? t('remote_scanner_phone_bar') : t('remote_scanner_connecting')}
+          </span>
+          <button onClick={() => setRemoteView(remoteView === 'scanner' ? 'full' : 'scanner')}
+            className="flex items-center gap-1 px-2 py-0.5 rounded bg-green-600 hover:bg-green-500 transition-colors">
+            {remoteView === 'scanner' ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
+            {remoteView === 'scanner' ? t('remote_scanner_view_toggle_full') : t('remote_scanner_view_toggle_scanner')}
+          </button>
+        </div>
+      )}
       {isOffline && <OfflineBanner />}
+
+      {remoteMode && remoteView === 'scanner' ? (
+        <div className="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
+          <div className="max-w-md mx-auto w-full">
+            <ScannerWidget onScan={handleRemoteScan} importMode={importMode} />
+          </div>
+          <div className="max-w-md mx-auto w-full bg-card border border-border rounded-lg p-3">
+            <button onClick={() => setImportMode(!importMode)}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${importMode ? 'bg-blue-600 text-white' : 'bg-accent text-foreground hover:bg-accent/80'}`}>
+              <span className="flex items-center gap-2"><Plus size={16} />{t('sidebar_import_mode_label')}</span>
+              <span className={`px-2 py-0.5 rounded text-xs font-bold ${importMode ? 'bg-blue-500 text-white' : 'bg-muted text-muted-foreground'}`}>{importMode ? t('sidebar_import_mode_on') : t('sidebar_import_mode_off')}</span>
+            </button>
+            {importMode && <p className="text-xs text-blue-500 mt-1.5">{t('sidebar_import_mode_hint')}</p>}
+          </div>
+          <div className="max-w-md mx-auto w-full bg-card border border-border rounded-lg p-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t('remote_scanner_recent_scans')}</h3>
+            {recentScans.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">{t('remote_scanner_no_scans')}</p>
+            ) : (
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {recentScans.map((s, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm bg-accent/30 rounded px-2 py-1">
+                    <span className="font-mono text-foreground">{s.barcode}</span>
+                    <span className="text-xs text-muted-foreground">{s.time.toLocaleTimeString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="max-w-md mx-auto w-full">
+            <ScannedItemPanel cart={cart} onUpdateQty={handleUpdateCartQty} onAddQty={handleAddQty} onRemove={handleRemoveFromCart} onClearCart={handleClearCart} onCheckout={handleCheckout} stageName={activeStage?.name} />
+          </div>
+        </div>
+      ) : (
+        <>
       <TopBar
         itemCount={items.length}
         onExportJson={handleExportJson}
@@ -544,6 +618,12 @@ export default function App() {
               <FileSpreadsheet size={16} /> {t('sidebar_bulk_import_button')}
             </button>
             <ScannedItemPanel cart={cart} onUpdateQty={handleUpdateCartQty} onAddQty={handleAddQty} onRemove={handleRemoveFromCart} onClearCart={handleClearCart} onCheckout={handleCheckout} stageName={activeStage?.name} />
+            <RemoteScannerPanel
+              status={peerSync.state.status}
+              peerId={peerSync.state.peerId}
+              onStart={handleStartRemoteScanner}
+              onStop={peerSync.stopHosting}
+            />
             <CrewSelector stages={stages} activeStageId={activeStageId} onSelect={setActiveStageId} onAdd={handleAddStage} onDelete={handleDeleteStage} />
           </aside>
           <main className="flex-1 p-4 overflow-hidden">
@@ -835,6 +915,8 @@ export default function App() {
       )}
 
       {bulkImportModal && <BulkImportModal onClose={() => setBulkImportModal(false)} />}
+      </>
+    )}
     </div>
   )
 }
