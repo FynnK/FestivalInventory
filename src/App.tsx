@@ -523,7 +523,7 @@ export default function App() {
       {view === 'inventory' && (
         <div className="flex-1 flex gap-0 overflow-hidden">
           <aside className="w-72 flex-shrink-0 flex flex-col gap-3 p-3 overflow-y-auto border-r border-border bg-card/50">
-            <ScannerWidget onScan={handleScan} />
+            <ScannerWidget onScan={handleScan} importMode={importMode} />
             <div className="bg-card border border-border rounded-lg p-3">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t('sidebar_scan_barcode_heading')}</h3>
               <form onSubmit={handleBarcodeSubmit}>

@@ -259,6 +259,8 @@ export const en: Record<string, string> = {
   scanner_stop_button: 'Stop',
   scanner_error_start_failed: 'Failed to start camera',
   scanner_request_permission_button: 'Request Camera Permission',
+  scanner_detected_label: 'Scanned:',
+  scanner_confirm_scan_button: 'Use Barcode',
 
   // Confirmation modal
   modal_confirm_default: 'Confirm',
